@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">ReCall icon</title>
+  <desc id="desc">Code braces surround a green checkmark, enclosed by a blue return arrow: recover a function match and feed it back into analysis.</desc>
+  <defs>
+    <linearGradient id="tile" x1="15" y1="8" x2="117" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#193A60"/>
+      <stop offset="1" stop-color="#10253F"/>
+    </linearGradient>
+    <linearGradient id="loop" x1="91" y1="27" x2="95" y2="99" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#5EEAD4"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#tile)"/>
+  <path d="M94 34C76 16 47 18 31 37C15 56 19 85 39 99C61 114 90 105 103 83" stroke="url(#loop)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M107 72L108 91L91 82Z" fill="#5EEAD4"/>
+  <path d="M49 45C40 45 46 57 37 63C46 69 40 81 49 81" stroke="#F1F5F9" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M79 45C88 45 82 57 91 63C82 69 88 81 79 81" stroke="#F1F5F9" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M55 63L62 70L74 55" stroke="#5EEAD4" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

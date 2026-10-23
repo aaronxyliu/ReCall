@@ -18,7 +18,7 @@ Precedence is built-in defaults → configuration file → explicit CLI override
 
 CLI recovery overrides: `--top-k`, `--radius`, `--min-features`, `--feature-metric`, `--min-anchors`, `--embedding-model`, `--validation-model`, `--endpoint`, `--thinking true|false`, `--cross-chunk true|false`, `--library-gate true|false`, `--max-validation-calls`, and `--cache`. `--references`, `--catalog`, `--offline`, and `--quiet` control the workflow. Other settings belong in JSON.
 
-`systemPrompt:null` selects the preserved validator prompt. An explicit string defines a different configuration and cannot reuse incompatible cache entries. Caches are keyed by exact requests, endpoint, model digest, and options. Defaults do not establish an optimal scientific configuration; configuration tradeoffs remain an empirical question.
+`systemPrompt:null` loads the default instructions from [src/analysis/validator-system-prompt.txt](../src/analysis/validator-system-prompt.txt). Edit that file to change the default, or set `models.systemPrompt` to replacement prompt text (a string, not a file path). The validator expects exactly uppercase `T` or `F`. Start a new run directory after changing the prompt. An explicit string defines a different configuration and cannot reuse incompatible cache entries. Caches are keyed by exact requests, endpoint, model digest, and options. Defaults do not establish an optimal scientific configuration; configuration tradeoffs remain an empirical question.
 
 Standalone example:
 

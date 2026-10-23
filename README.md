@@ -1,4 +1,7 @@
-<h1 align="center">ReCall</h1>
+<h1 align="center">
+  <img src="docs/assets/recall-logo.png" alt="" width="48" height="48" align="absmiddle">
+  ReCall
+</h1>
 
 <p align="center">
   <strong>Accurate and Scalable Function Recovery for Bundled JavaScript</strong>
@@ -10,16 +13,22 @@
 
 <p align="center">
   <a href="#quick-start">Quick start</a> ·
-  <a href="#how-it-works">How it works</a> ·
   <a href="#usage">Usage</a> ·
   <a href="#outputs">Outputs</a> ·
+  <a href="#how-it-works">How it works</a> ·
   <a href="#components">Components</a> ·
   <a href="#documentation">Documentation</a>
 </p>
 
 ---
 
-ReCall recovers library function identities from bundled JavaScript using **POG anchors**, **module-aware relationship graphs**, and **LLM validation**. Give it captured JavaScript and local library references—or a fingerprint catalog—and receive a function mapping with locations, package versions, and recovery evidence.
+Real-world websites commonly serve **bundled and minified JavaScript**, which obscures function names, module boundaries, and library origins and makes program analysis difficult. **ReCall recovers the original library functions behind this code**: it identifies libraries and versions, resolves the bundling strategy, and maps bundled functions to their original source implementations so analysts can inspect their original logic.
+
+[![ReCall connects minified website JavaScript to its library name, version, bundling strategy, and original function implementation](docs/assets/recovery-overview-polished.png)](docs/assets/recovery-overview-polished.png)
+
+*Illustrative example: linking a minified function to `lodash@4.17.21`’s original `isObject` implementation.* [Editable SVG](docs/assets/recovery-overview-polished.svg)
+
+ReCall combines **POG anchors**, **module-aware relationship graphs**, and **LLM validation**. Supply captured JavaScript and either local reference packages or a fingerprint catalog. **Source maps are not required.**
 
 - **Anchor-guided recovery.** Start from fingerprint matches and expand through corresponding source and bundle neighborhoods.
 - **Bundler-aware analysis.** Resolve mechanisms used by webpack, Rspack, esbuild, Rollup, Rolldown, Turbopack, and Parcel.
@@ -40,12 +49,14 @@ node bin/recall.mjs recover examples/minimal/bundle \
   --out outputs/demo
 ```
 
-This prepares the example **without a model service**. Open `outputs/demo/anchors.json`, `libraries.json`, and `sourceGraph.json` / `bundleGraph.json` to inspect the static results. The example uses a library threshold of one to demonstrate a small imported-helper case.
+**Expected result:** `outputs/demo/status.json` contains `{"status":"prepared","modelCalls":0}`. The example identifies `example-library@1.0.0`, finds **one POG anchor**, and builds source and bundle graphs connecting the anchor to an imported helper.
+
+Inspect `anchors.json`, `libraries.json`, `sourceGraph.json`, and `bundleGraph.json` inside `outputs/demo/`. This step needs **no model service** and stops before final function recovery. The fixture sets the library threshold to one because it contains only one eligible anchor; normal runs default to three. See the [example guide](examples/minimal/README.md).
 
 <details>
 <summary><strong>Continue the example with model validation</strong></summary>
 
-Make the configured models available on an Ollama-compatible service, then continue the prepared run:
+Full recovery needs an **Ollama-compatible model service** with both configured models available. Start the service using the settings saved during preparation, then continue the prepared run:
 
 ```sh
 node bin/recall.mjs recover examples/minimal/bundle \
@@ -60,23 +71,24 @@ node bin/recall.mjs recover examples/minimal/bundle \
 | Candidate ranking | `qwen3-embedding:0.6b` |
 | Function-pair validation | `qwen3.5:27b` |
 
-Validation uses thinking off and strict **T/F** responses. The default endpoint is `http://127.0.0.1:11434`. Model names and serving options can be changed in your [configuration](docs/configuration.md); model weights are managed by the serving runtime.
+Validation uses thinking off and strict **T/F** responses. The default endpoint is `http://127.0.0.1:11434`. Model names and serving options can be changed in your [configuration](docs/configuration.md); model weights are managed by the serving runtime. If you change model settings after preparation, choose a new output directory.
 
 </details>
 
-## How it works
-
-[![ReCall workflow: anchor pair, paired neighborhoods, top-five ranking, LLM validation, and new-anchor feedback](docs/assets/pipeline-workflow-b-prime.png)](docs/assets/pipeline-workflow-b-prime.png)
-
-A known match between a source function **s** and bundled function **b** provides the starting anchor. ReCall finds an unmatched neighbor **b′**, collects source candidates from the corresponding neighborhoods, and ranks them by embedding similarity. The **top five** are validated in order; the first positive proposal can become a new anchor after conflict checks at round end.
-
-Solid graph arrows represent calls or function references, including resolved imports; dashed edges represent scope or proximity. Search traverses these relationships in both directions and combines candidate pools from nearby anchors. The figure illustrates the process rather than experimental scores. [Open full-size figure](docs/assets/pipeline-workflow-b-prime.png) · [Editable SVG](docs/assets/pipeline-workflow.svg)
-
 ## Usage
 
-### Recover from your own JavaScript
+Place captured `.js`, `.mjs`, and `.cjs` files in a directory, including shared and lazy-loaded chunks needed for the analysis. Capture the page and relevant interactions before running ReCall; it analyzes the supplied files.
 
-Put captured `.js`, `.mjs`, and `.cjs` files in a directory. Supply local reference packages, each with a `package.json` identifying its name and version. Copy the starter configuration and run:
+Choose how to provide the reference implementations:
+
+| Available references | Use |
+|---|---|
+| Local packages with known names and exact versions | `--references ./reference-packages` |
+| A reusable catalog of candidate packages and versions | `--catalog ./library-catalog.json`; ReCall selects candidates and obtains their exact npm references |
+
+### Recover using local reference packages
+
+Supply a single package directory or a directory containing package directories. Each package needs a `package.json` with its name and exact version, plus its JavaScript files. Copy the starter configuration and run:
 
 ```sh
 cp examples/recall.config.json recall.json
@@ -87,7 +99,7 @@ node bin/recall.mjs recover ./captured-js \
   --out outputs/site
 ```
 
-Adjust the model endpoint and aliases in `recall.json` for your serving environment. Use an [explicit manifest](components/pog/README.md#manifest-and-contracts) when you need to curate input files or separate execution environments. Browser capture is performed before running ReCall.
+Adjust the model endpoint and aliases in `recall.json` for your serving environment. Add `--prepare-only` to inspect static artifacts first, then `--resume` to continue the same run. Use an [explicit manifest](components/pog/README.md#manifest-and-contracts) to curate input files or separate execution environments.
 
 <details>
 <summary><strong>Identify libraries using a fingerprint catalog</strong></summary>
@@ -108,6 +120,14 @@ node bin/recall.mjs recover ./captured-js \
 ReCall uses verified local references when available and otherwise obtains exact npm versions with archive integrity checks. Package scripts are not executed. The catalog covers the packages and versions you indexed; a comprehensive npm catalog is not bundled. Ambiguous library versions remain explicit. See the [catalog guide](docs/quickstart.md#build-and-reuse-a-library-catalog).
 
 </details>
+
+### Customize the validator prompt
+
+The default LLM validation prompt lives in a separate editable file: **[src/analysis/validator-system-prompt.txt](src/analysis/validator-system-prompt.txt)**. Edit this file to change the default instructions.
+
+For a per-run override, set `models.systemPrompt` in `recall.json` to your replacement **prompt text**. This setting accepts a string, not a file path; `null` uses the default prompt file. Keep the instruction to return exactly uppercase **T** or **F**, as the validator only accepts those responses.
+
+ReCall sends the original source function, minified source function, and bundled function as a JSON user message. This payload is constructed in [components/pipeline/models.mjs](components/pipeline/models.mjs). Candidate ranking uses embeddings and has no separate instruction prompt. Start a new run directory after changing the prompt. See the [configuration reference](docs/configuration.md).
 
 ### Check, resume, and control runs
 
@@ -134,7 +154,7 @@ node bin/recall.mjs recover --help
 
 ## Outputs
 
-Each run writes its artifacts to the chosen output directory:
+A recovery run writes its function mapping, summary, and supporting evidence to the chosen output directory:
 
 ```text
 outputs/site/
@@ -156,12 +176,40 @@ const {functions} = JSON.parse(
 );
 
 for (const match of functions) {
-  console.log(match.bundle.file, match.bundle.span,
-              match.source.library, match.source.name, match.method);
+  const {name, version} = match.source.library;
+  console.log(`${name}@${version}`, match.source.name,
+              match.bundle.file, match.bundle.span, match.method);
 }
 ```
 
-**Recovery coverage is not accuracy.** Coverage counts recovered functions among parsed input functions; parse failures are reported separately. Accuracy requires independent ground truth. Static preparation stops before producing the final recovery mapping and summary.
+Locations use `[start, end)` offsets in the exact saved JavaScript text. The mapping records whether a function was identified through a POG anchor or model validation, so downstream analysis can retain that evidence.
+
+`summary.json` reports recovered counts, unresolved categories, candidate-validation checks, and elapsed time. **Coverage** uses all parsed input functions as its denominator, including application code; it is different from per-library recovery measured against ground truth. Parse failures are reported separately, and accuracy requires independent ground truth. `--prepare-only` produces static artifacts and `status.json`, with the final mapping and summary written during recovery.
+
+## How it works
+
+[![ReCall workflow: anchor pair, paired neighborhoods, top-five ranking, LLM validation, and new-anchor feedback](docs/assets/pipeline-workflow-b-prime.png)](docs/assets/pipeline-workflow-b-prime.png)
+
+POG (property-operation graph) fingerprints provide initial source-to-bundle matches. ReCall builds relationship graphs on **both the source and bundle sides**, enriching them with resolved module relationships when enabled.
+
+A known match between a source function **s** and bundled function **b** provides the starting anchor. ReCall finds an unmatched neighbor **b′**, collects source candidates from the corresponding neighborhoods, and ranks them by embedding similarity. The **top five** are validated in order; the first positive proposal can become a new anchor after conflict checks at round end.
+
+Solid graph arrows represent calls or function references, including resolved imports; dashed edges represent scope or proximity. Search traverses these relationships in both directions and combines candidate pools from nearby anchors. The figure illustrates the process rather than experimental scores. [Open full-size figure](docs/assets/pipeline-workflow-b-prime.png) · [Editable SVG](docs/assets/pipeline-workflow.svg)
+
+<details>
+<summary><strong>Bundler mechanisms and scope</strong></summary>
+
+| Bundler family | Relationships the resolver models |
+|---|---|
+| webpack / Rspack | Module factory tables, loader calls, exports, and chunk registrations |
+| esbuild / Rollup | ESM imports and exports, flattened code, and shared export/interop helpers |
+| Rolldown | Lazy module factories and interop helpers alongside shared ESM/CJS handling |
+| Turbopack | Context operations and module registrations |
+| Parcel | Scoped loaders, module registrations, and exports |
+
+Resolution follows mechanisms present in the code. Compatible outputs can leave the bundler family ambiguous while still allowing relationships to be resolved. Flattened builds can erase original module boundaries; cross-chunk recovery also depends on supplying the relevant files and enabling `recovery.crossChunk` (default: `false`). See [module resolution](components/modules/README.md) and [adapter development](docs/adapters.md) for details and limitations.
+
+</details>
 
 ## Components
 
@@ -214,6 +262,7 @@ Module maps optionally enrich the source and bundle graphs; graph construction c
 | I want to… | Read |
 |---|---|
 | Prepare real inputs and run recovery | [Quickstart](docs/quickstart.md) |
+| Find or customize the validation prompt | [Prompt customization](#customize-the-validator-prompt) |
 | Change models, thresholds, or graph settings | [Configuration reference](docs/configuration.md) |
 | Integrate components and inspect artifacts | [Data contracts](docs/component-contracts.md) |
 | Add support for another runtime format | [Adapter development](docs/adapters.md) |
