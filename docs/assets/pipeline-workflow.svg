@@ -1,0 +1,183 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="575" viewBox="0 0 1380 575" role="img" aria-labelledby="title desc">
+<title id="title">ReCall: iterative recovery from function anchors</title>
+<desc id="desc">Take a known source and bundle function pair from the anchor set. Inspect both function neighborhoods. For an unmatched b′ function, rank seven source candidates by embedding similarity and keep five. Validate them in order: Candidate 3 and Candidate 1 fail, Candidate 6 passes. After conflict checks, add this new match to the anchor set for the next round. Blue arrows mean calls or function references, including imported calls. Dashed gray edges mean scope or proximity relationships. Neighborhood traversal is undirected.</desc>
+<defs>
+ <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7Z" fill="#93a4bb"/></marker>
+ <marker id="blue" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6Z" fill="#4f7cbe"/></marker>
+ <marker id="green" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7Z" fill="#059669"/></marker>
+</defs>
+<rect x="0" y="0" width="1380" height="575" rx="0" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<text x="20" y="32" font-size="25" fill="#172b4d" font-weight="700" text-anchor="start" font-family="Arial, Helvetica, sans-serif">From anchors to recovered functions</text>
+<text x="20" y="57" font-size="15" fill="#64748b" font-weight="400" text-anchor="start" font-family="Arial, Helvetica, sans-serif">One anchor pair → paired neighborhoods → ranked candidates → validation → new anchor</text>
+<rect x="20" y="89" width="175" height="377" rx="12" fill="#fbfcfe" stroke="#e2e8f0" stroke-width="1"/>
+<circle cx="42" cy="114" r="12" fill="#e8eef8"/>
+<text x="42" y="118" font-size="12" fill="#37557e" font-weight="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">1</text>
+<text x="63" y="120" font-size="16" fill="#253e60" font-weight="700" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Pick an anchor</text>
+<rect x="215" y="89" width="505" height="377" rx="12" fill="#fbfcfe" stroke="#e2e8f0" stroke-width="1"/>
+<circle cx="237" cy="114" r="12" fill="#e8eef8"/>
+<text x="237" y="118" font-size="12" fill="#37557e" font-weight="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">2</text>
+<text x="258" y="120" font-size="16" fill="#253e60" font-weight="700" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Explore neighborhoods</text>
+<rect x="740" y="89" width="245" height="377" rx="12" fill="#fbfcfe" stroke="#e2e8f0" stroke-width="1"/>
+<circle cx="762" cy="114" r="12" fill="#e8eef8"/>
+<text x="762" y="118" font-size="12" fill="#37557e" font-weight="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">3</text>
+<text x="783" y="120" font-size="16" fill="#253e60" font-weight="700" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Rank + keep top 5</text>
+<rect x="1005" y="89" width="355" height="377" rx="12" fill="#fbfcfe" stroke="#e2e8f0" stroke-width="1"/>
+<circle cx="1027" cy="114" r="12" fill="#e8eef8"/>
+<text x="1027" y="118" font-size="12" fill="#37557e" font-weight="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">4</text>
+<text x="1048" y="120" font-size="16" fill="#253e60" font-weight="700" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Validate and promote</text>
+<text x="107" y="165" font-size="18" fill="#065f46" font-weight="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Anchor set</text>
+<rect x="37" y="183" width="141" height="40" rx="8" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="107" y="208" font-size="14" fill="#94a3b8" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Other matches</text>
+<rect x="32" y="235" width="151" height="57" rx="10" fill="#ecfdf5" stroke="#34b68a" stroke-width="1.7"/>
+<text x="107" y="259" font-size="17" fill="#065f46" font-weight="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Known match</text>
+<text x="107" y="280" font-size="12" fill="#347b62" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Source s ↔ Bundle b</text>
+<rect x="37" y="304" width="141" height="40" rx="8" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="107" y="330" font-size="14" fill="#94a3b8" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Other matches</text>
+<text x="107" y="380" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Known source ↔ bundle</text>
+<text x="107" y="398" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">function pairs</text>
+<text x="107" y="435" font-size="13" fill="#065f46" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Select one pair</text>
+<line x1="196" y1="264" x2="212" y2="264" stroke="#93a4bb" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="230" y="143" width="260" height="250" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="500" y="143" width="205" height="250" rx="10" fill="#fff" stroke="#e2e8f0" stroke-width="1"/>
+<text x="360" y="166" font-size="14" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Library source graph</text>
+<text x="602" y="166" font-size="14" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Bundled graph</text>
+<line x1="341.17899826159885" y1="258.608341053073" x2="301.9655016593829" y2="234.87385626752123" stroke="#4f7cbe" stroke-width="1.6" marker-end="url(#blue)"/>
+<line x1="355.80086749975106" y1="248.4044614272912" x2="350.0082628411467" y2="218.6139231830402" stroke="#4f7cbe" stroke-width="1.6" marker-end="url(#blue)"/>
+<line x1="376.5566872835513" y1="255.5128986268926" x2="408.1958894111556" y2="227.82859676523887" stroke="#4f7cbe" stroke-width="1.6" marker-end="url(#blue)"/>
+<line x1="381.5333937555631" y1="274.50698939069923" x2="425.4453968696898" y2="283.69787376342344" stroke="#4f7cbe" stroke-width="1.6" marker-end="url(#blue)"/>
+<line x1="368.17059487979026" y1="290.4264871994757" x2="386.2007957965638" y2="335.5019894914096" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="4 4"/>
+<line x1="348.2180754421167" y1="288.5791887258929" x2="319.246382532525" y2="334.2653198525568" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="4 4"/>
+<line x1="338.6428239027093" y1="275.2793019566337" x2="291.38639536559566" y2="286.9606663141224" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="4 4"/>
+<text x="300" y="237" font-size="10" fill="#4f7cbe" font-weight="400" text-anchor="start" font-family="Arial, Helvetica, sans-serif">calls</text>
+<text x="387" y="237" font-size="10" fill="#4f7cbe" font-weight="400" text-anchor="start" font-family="Arial, Helvetica, sans-serif">via import</text>
+<text x="319" y="311" font-size="10" fill="#7b8798" font-weight="400" text-anchor="start" font-family="Arial, Helvetica, sans-serif">scope</text>
+<circle cx="360" cy="270" r="23" fill="#ecfdf5" stroke="#059669" stroke-width="2.2"/>
+<text x="360" y="275" font-size="15" fill="#065f46" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">s</text>
+<circle cx="284" cy="224" r="18" fill="#fff" stroke="#7fa2d1" stroke-width="1.5"/>
+<text x="284" y="229" font-size="15" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">1</text>
+<circle cx="346" cy="198" r="18" fill="#fff" stroke="#7fa2d1" stroke-width="1.5"/>
+<text x="346" y="203" font-size="15" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">2</text>
+<circle cx="424" cy="214" r="18" fill="#fff" stroke="#7fa2d1" stroke-width="1.5"/>
+<text x="424" y="219" font-size="15" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">3</text>
+<circle cx="446" cy="288" r="18" fill="#fff" stroke="#7fa2d1" stroke-width="1.5"/>
+<text x="446" y="293" font-size="15" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">4</text>
+<circle cx="394" cy="355" r="18" fill="#fff" stroke="#7fa2d1" stroke-width="1.5"/>
+<text x="394" y="360" font-size="15" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">5</text>
+<circle cx="308" cy="352" r="18" fill="#fff" stroke="#7fa2d1" stroke-width="1.5"/>
+<text x="308" y="357" font-size="15" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">6</text>
+<circle cx="271" cy="292" r="18" fill="#fff" stroke="#7fa2d1" stroke-width="1.5"/>
+<text x="271" y="297" font-size="15" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">7</text>
+<text x="360" y="384" font-size="10" fill="#64748b" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">1–7: source candidates</text>
+<line x1="567.0" y1="270.0" x2="632.0" y2="270.0" stroke="#4f7cbe" stroke-width="1.6" marker-end="url(#blue)"/>
+<line x1="560.870521062681" y1="254.7642997798263" x2="604.85086625835" y2="212.54316839198398" stroke="#4f7cbe" stroke-width="1.6" marker-end="url(#blue)"/>
+<line x1="558.7432910461973" y1="287.17911380774666" x2="595.881404001357" y2="333.60175500169635" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="4 4"/>
+<text x="602" y="257" font-size="10" fill="#4f7cbe" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">calls / ref</text>
+<circle cx="545" cy="270" r="22" fill="#ecfdf5" stroke="#059669" stroke-width="2.2"/>
+<text x="545" y="275" font-size="15" fill="#065f46" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">b</text>
+<circle cx="657" cy="270" r="22" fill="#fffbeb" stroke="#d97706" stroke-width="2.2"/>
+<text x="657" y="275" font-size="17" fill="#92400e" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">b′</text>
+<circle cx="620" cy="198" r="18" fill="#fff" stroke="#7fa2d1" stroke-width="1.5"/>
+<text x="620" y="203" font-size="15" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">…</text>
+<circle cx="609" cy="350" r="18" fill="#fff" stroke="#7fa2d1" stroke-width="1.5"/>
+<text x="609" y="355" font-size="15" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">…</text>
+<text x="658" y="308" font-size="12" fill="#92400e" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">unmatched</text>
+<rect x="252" y="408" width="431" height="37" rx="8" fill="#f0f7ff" stroke="#d6e4f5" stroke-width="1"/>
+<text x="467" y="431" font-size="14" fill="#315580" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Start from a known match; identify b′</text>
+<line x1="721" y1="270" x2="737" y2="270" stroke="#93a4bb" stroke-width="1.6" marker-end="url(#arrow)"/>
+<text x="862" y="155" font-size="11" fill="#64748b" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">0.6B embedding · cosine to b′</text>
+<rect x="751" y="174" width="223" height="169" rx="10" fill="#effbf5" stroke="#92d4b4" stroke-width="1.4"/>
+<text x="961" y="171" font-size="10" fill="#15805b" font-weight="700" text-anchor="end" font-family="Arial, Helvetica, sans-serif">TOP 5</text>
+<rect x="758" y="180" width="209" height="27" rx="6" fill="#fff" stroke="#dce6e0" stroke-width="1"/>
+<circle cx="774" cy="193.5" r="9" fill="#dcefe4"/>
+<text x="774" y="198" font-size="11" fill="#36694e" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">1</text>
+<circle cx="805" cy="193.5" r="6" fill="#dceafa" stroke="#7fa2d1"/>
+<text x="819" y="198" font-size="11" fill="#315580" font-weight="600" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Candidate 3</text>
+<rect x="895" y="191" width="60" height="5" rx="2" fill="#7fa2d1" stroke="none" stroke-width="1"/>
+<rect x="758" y="213" width="209" height="27" rx="6" fill="#fff" stroke="#dce6e0" stroke-width="1"/>
+<circle cx="774" cy="226.5" r="9" fill="#dcefe4"/>
+<text x="774" y="231" font-size="11" fill="#36694e" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">2</text>
+<circle cx="805" cy="226.5" r="6" fill="#dceafa" stroke="#7fa2d1"/>
+<text x="819" y="231" font-size="11" fill="#315580" font-weight="600" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Candidate 1</text>
+<rect x="895" y="224" width="52" height="5" rx="2" fill="#7fa2d1" stroke="none" stroke-width="1"/>
+<rect x="758" y="246" width="209" height="27" rx="6" fill="#fff" stroke="#dce6e0" stroke-width="1"/>
+<circle cx="774" cy="259.5" r="9" fill="#dcefe4"/>
+<text x="774" y="264" font-size="11" fill="#36694e" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">3</text>
+<circle cx="805" cy="259.5" r="6" fill="#dceafa" stroke="#7fa2d1"/>
+<text x="819" y="264" font-size="11" fill="#315580" font-weight="600" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Candidate 6</text>
+<rect x="895" y="257" width="44" height="5" rx="2" fill="#7fa2d1" stroke="none" stroke-width="1"/>
+<rect x="758" y="279" width="209" height="27" rx="6" fill="#fff" stroke="#dce6e0" stroke-width="1"/>
+<circle cx="774" cy="292.5" r="9" fill="#dcefe4"/>
+<text x="774" y="297" font-size="11" fill="#36694e" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">4</text>
+<circle cx="805" cy="292.5" r="6" fill="#dceafa" stroke="#7fa2d1"/>
+<text x="819" y="297" font-size="11" fill="#315580" font-weight="600" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Candidate 4</text>
+<rect x="895" y="290" width="37" height="5" rx="2" fill="#7fa2d1" stroke="none" stroke-width="1"/>
+<rect x="758" y="312" width="209" height="27" rx="6" fill="#fff" stroke="#dce6e0" stroke-width="1"/>
+<circle cx="774" cy="325.5" r="9" fill="#dcefe4"/>
+<text x="774" y="330" font-size="11" fill="#36694e" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">5</text>
+<circle cx="805" cy="325.5" r="6" fill="#dceafa" stroke="#7fa2d1"/>
+<text x="819" y="330" font-size="11" fill="#315580" font-weight="600" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Candidate 2</text>
+<rect x="895" y="323" width="29" height="5" rx="2" fill="#7fa2d1" stroke="none" stroke-width="1"/>
+<rect x="758" y="360" width="209" height="27" rx="6" fill="#f4f6f9" stroke="#e7ebf0" stroke-width="1"/>
+<circle cx="774" cy="373.5" r="9" fill="#e5e9ef"/>
+<text x="774" y="378" font-size="11" fill="#94a3b8" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">6</text>
+<circle cx="805" cy="373.5" r="6" fill="#e5e9ef" stroke="#cbd5e1"/>
+<text x="819" y="378" font-size="11" fill="#94a3b8" font-weight="600" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Candidate 5</text>
+<rect x="895" y="371" width="20" height="5" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<rect x="758" y="393" width="209" height="27" rx="6" fill="#f4f6f9" stroke="#e7ebf0" stroke-width="1"/>
+<circle cx="774" cy="406.5" r="9" fill="#e5e9ef"/>
+<text x="774" y="411" font-size="11" fill="#94a3b8" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">7</text>
+<circle cx="805" cy="406.5" r="6" fill="#e5e9ef" stroke="#cbd5e1"/>
+<text x="819" y="411" font-size="11" fill="#94a3b8" font-weight="600" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Candidate 7</text>
+<rect x="895" y="404" width="12" height="5" rx="2" fill="#cbd5e1" stroke="none" stroke-width="1"/>
+<line x1="758" y1="350" x2="967" y2="350" stroke="#a8b7ac" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="862" y="441" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Highest similarity first</text>
+<line x1="986" y1="270" x2="1002" y2="270" stroke="#93a4bb" stroke-width="1.6" marker-end="url(#arrow)"/>
+<rect x="1021" y="145" width="323" height="66" rx="10" fill="#f5f3ff" stroke="#d8cff0" stroke-width="1"/>
+<rect x="1036" y="162" width="30" height="30" rx="5" fill="#ede9fe" stroke="#8978b8" stroke-width="1.5"/>
+<rect x="1044" y="170" width="14" height="14" rx="2" fill="#fff" stroke="#8978b8" stroke-width="1"/>
+<line x1="1043" y1="157" x2="1043" y2="161" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1043" y1="193" x2="1043" y2="198" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1051" y1="157" x2="1051" y2="161" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1051" y1="193" x2="1051" y2="198" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1059" y1="157" x2="1059" y2="161" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1059" y1="193" x2="1059" y2="198" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1031" y1="169" x2="1035" y2="169" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1067" y1="169" x2="1071" y2="169" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1031" y1="177" x2="1035" y2="177" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1067" y1="177" x2="1071" y2="177" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1031" y1="185" x2="1035" y2="185" stroke="#8978b8" stroke-width="1.2"/>
+<line x1="1067" y1="185" x2="1071" y2="185" stroke="#8978b8" stroke-width="1.2"/>
+<text x="1084" y="172" font-size="16" fill="#5b4483" font-weight="700" text-anchor="start" font-family="Arial, Helvetica, sans-serif">LLM validator — Qwen3.5-27B</text>
+<text x="1084" y="194" font-size="12" fill="#7b6b91" font-weight="400" text-anchor="start" font-family="Arial, Helvetica, sans-serif">T / F only · thinking off</text>
+<text x="1182" y="230" font-size="13" fill="#64748b" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Try candidates in rank order</text>
+<rect x="1032" y="241" width="300" height="34" rx="7" fill="#fff" stroke="#e1e5ee" stroke-width="1"/>
+<text x="1048" y="263" font-size="14" fill="#475569" font-weight="600" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Candidate 3 ↔ b′</text>
+<rect x="1291" y="247" width="28" height="22" rx="5" fill="#fff1f2" stroke="none" stroke-width="1"/>
+<text x="1305" y="263" font-size="13" fill="#b85a65" font-weight="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">F</text>
+<rect x="1032" y="284" width="300" height="34" rx="7" fill="#fff" stroke="#e1e5ee" stroke-width="1"/>
+<text x="1048" y="306" font-size="14" fill="#475569" font-weight="600" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Candidate 1 ↔ b′</text>
+<rect x="1291" y="290" width="28" height="22" rx="5" fill="#fff1f2" stroke="none" stroke-width="1"/>
+<text x="1305" y="306" font-size="13" fill="#b85a65" font-weight="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">F</text>
+<rect x="1032" y="327" width="300" height="34" rx="7" fill="#ecfdf5" stroke="#91cdb2" stroke-width="1"/>
+<text x="1048" y="349" font-size="14" fill="#065f46" font-weight="600" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Candidate 6 ↔ b′</text>
+<rect x="1291" y="333" width="28" height="22" rx="5" fill="#059669" stroke="none" stroke-width="1"/>
+<text x="1305" y="349" font-size="13" fill="#fff" font-weight="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">T</text>
+<text x="1182" y="383" font-size="12" fill="#64748b" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">F: try next  ·  first T: stop</text>
+<line x1="1182" y1="387" x2="1182" y2="399" stroke="#059669" stroke-width="1.6" marker-end="url(#green)"/>
+<rect x="1021" y="401" width="323" height="51" rx="10" fill="#ecfdf5" stroke="#34b68a" stroke-width="1.5"/>
+<text x="1182" y="422" font-size="16" fill="#065f46" font-weight="700" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Match Candidate 6 to b′</text>
+<text x="1182" y="442" font-size="12" fill="#347b62" font-weight="400" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">After conflict checks, at round end</text>
+<path d="M1182 453 V497 H107 V469" fill="none" stroke="#059669" stroke-width="2.1" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#green)"/>
+<rect x="456" y="482" width="415" height="28" rx="0" fill="#fff" stroke="#fff" stroke-width="1"/>
+<text x="663" y="501" font-size="14" fill="#047857" font-weight="600" text-anchor="middle" font-family="Arial, Helvetica, sans-serif">Add the new match to the anchor set · next round</text>
+<line x1="35" y1="534" x2="66" y2="534" stroke="#4f7cbe" stroke-width="1.6" marker-end="url(#blue)"/>
+<text x="76" y="539" font-size="12" fill="#52657b" font-weight="400" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Calls / references, including resolved imports</text>
+<line x1="431" y1="534" x2="462" y2="534" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="4 4"/>
+<text x="472" y="539" font-size="12" fill="#52657b" font-weight="400" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Scope / proximity</text>
+<circle cx="684" cy="534" r="7" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+<text x="699" y="539" font-size="12" fill="#52657b" font-weight="400" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Known anchor</text>
+<circle cx="837" cy="534" r="7" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"/>
+<text x="852" y="539" font-size="12" fill="#52657b" font-weight="400" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Unmatched target</text>
+<text x="1358" y="539" font-size="11" fill="#7b8798" font-weight="400" text-anchor="end" font-family="Arial, Helvetica, sans-serif">Ranking shown schematically</text>
+<text x="20" y="562" font-size="12" fill="#64748b" font-weight="400" text-anchor="start" font-family="Arial, Helvetica, sans-serif">Neighborhood search traverses these relationships in both directions. With several nearby anchors, their source-neighbor pools are combined.</text>
+</svg>

@@ -1,0 +1,19 @@
+{
+  "roots": [
+    "source"
+  ],
+  "library": {
+    "name": "example-library",
+    "version": "1.0.0"
+  },
+  "files": [
+    {
+      "id": "source-anchor",
+      "path": "source/anchor.js"
+    },
+    {
+      "id": "source-helper",
+      "path": "source/helper.js"
+    }
+  ]
+}

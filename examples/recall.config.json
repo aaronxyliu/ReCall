@@ -1,0 +1,6 @@
+{
+  "recovery": {"minFeatures": 10, "minAnchors": 3, "topK": 5, "radius": 1, "libraryGate": true, "crossChunk": false},
+  "models": {"endpoint": "http://127.0.0.1:11434", "embeddingModel": "qwen3-embedding:0.6b", "validationModel": "qwen3.5:27b", "thinking": false},
+  "graph": {"useModules": true, "siblingWindow": 2, "includeContainment": true},
+  "execution": {"progress": true}
+}

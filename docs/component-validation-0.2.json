@@ -1,0 +1,62 @@
+{
+  "status": "passed",
+  "checked_at": "2026-10-23T04:55:52.944813+00:00",
+  "node": "v24.15.0",
+  "package_version": "0.2.0",
+  "components": [
+    "pog",
+    "bundler",
+    "modules",
+    "graph",
+    "pipeline"
+  ],
+  "deployed_tests": {
+    "total": 60,
+    "passed": 60,
+    "failed": 0
+  },
+  "clean_install": {
+    "command": "npm ci --offline --cache <existing-cache> --logs-max=0",
+    "preexisting_node_modules": false,
+    "vendored_node_modules": false,
+    "tests_passed": 60
+  },
+  "integration_checks": [
+    "five-component CLI using a loopback mock model service",
+    "standalone recovery from saved artifacts agrees with the integrated CLI",
+    "POG thresholds and library gating",
+    "module-plan JSON replay for webpack-compatible, Rspack, Rolldown, Turbopack, Parcel and native ESM mechanisms",
+    "optional module-aware graphs",
+    "cross-chunk propagation is opt-in",
+    "model options, strict T/F handling and cache isolation",
+    "modified or incompatible artifact rejection",
+    "resource budgets and duplicate explicit inputs",
+    "seven package export paths import",
+    "documented example preparation"
+  ],
+  "preserved_original_runtime_files": 23,
+  "preserved_manuscript_evidence_files": 76,
+  "real_model_requests": 0,
+  "new_accuracy_experiments": 0,
+  "source_sha256": {
+    "components/bundler/index.mjs": "6a35604325a6253b38a6610925f9fe36d0abf7547f47543f28d01473b0885e1e",
+    "components/graph/index.mjs": "77b5a2893ced3f07d4ac2023af90189294fc6c25fb99b967f25ba49960b4209d",
+    "components/modules/index.mjs": "ac6b6b3a6677f360b77cf02ad4fb9f3d12f957c83f9e49d5c7277ac21f677f58",
+    "components/pipeline/index.mjs": "684d94384707f716918088e8e0114690b13526c33d33f4d2c0c76aaac8fd97dd",
+    "components/pipeline/models.mjs": "41d1311529ee96fd7b67af8aaa4892f5b46f6d926c9db4b611ff575c2c392266",
+    "components/pog/index.mjs": "1a72916c6323f9c3fa0d6e574a98c0e6816b1a5ab36968c219c7545e541372ba",
+    "src/engine/analyzer.mjs": "51f16b897016671c385183e413a1c81bb84da1964e35f9bdbd518f7aeae892b8",
+    "src/engine/module-graph.mjs": "0506c1cb7e70cee0ea7cba78587480374c84bf73a8d5f96b92c4d30b3d4860e5",
+    "src/engine/recognize.mjs": "5ff24c330d11533c4173b826bfbe0342256a92f4039afa5b8c477de28411fca5",
+    "src/shared/artifacts.mjs": "9bf396d972e9e63eff5f50e02c79d31660aef63e1a9b0884e241186f4ee06712",
+    "bin/components.mjs": "2224877fc9475c8d8100a8f3d66616a4f3f91082c9f26e0bac5aabba73441d10",
+    "bin/legacy.mjs": "7dd3b74a633353b7883a6f7c6eaacf414ac05f2bfd80d068b67dc3386c82e434",
+    "bin/recall.mjs": "1ea3858ae1d77a99f91ce423e9d01186c245047c450f05008b9049d9612d5350",
+    "test/components.test.mjs": "eb1cca1d238fca221364ce7bee090281d8a23ee8f8d3d60d532f29137dd0302f"
+  },
+  "notes": [
+    "Tests use synthetic fixtures and mock model responses; they do not establish accuracy on unseen applications.",
+    "Original experiment scripts and evidence were verified byte-identical.",
+    "Fresh deployment uses the tracked local rapidhash runtime rather than an ignored vendor installation."
+  ]
+}

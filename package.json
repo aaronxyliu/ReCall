@@ -1,0 +1,39 @@
+{
+  "name": "recall",
+  "private": true,
+  "version": "0.3.1",
+  "type": "module",
+  "scripts": {
+    "test": "node --test scripts/real-app/bundle-graph-v2/*.test.mjs scripts/jquery/promotion-policy.test.mjs scripts/jquery/validator-policy.test.mjs scripts/jquery/variable-mapping-policy.test.mjs test/*.test.mjs",
+    "graph": "node bin/recall.mjs graph",
+    "recover": "node bin/recall.mjs recover",
+    "prepare:example": "node bin/recall.mjs recover examples/minimal/bundle --references examples/minimal/source --config examples/minimal/config.json --prepare-only --out outputs/minimal-prepared"
+  },
+  "dependencies": {
+    "meriyah": "6.0.6",
+    "terser": "5.43.1",
+    "acorn": "8.19.0",
+    "eslint-scope": "5.1.1",
+    "rapidhash-js": "file:third_party/rapidhash-js"
+  },
+  "description": "Composable library function recovery for bundled JavaScript",
+  "bin": {
+    "recall": "bin/recall.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    ".": "./index.mjs",
+    "./pog": "./components/pog/index.mjs",
+    "./bundler": "./components/bundler/index.mjs",
+    "./modules": "./components/modules/index.mjs",
+    "./graph": "./components/graph/index.mjs",
+    "./pipeline": "./components/pipeline/index.mjs",
+    "./models": "./components/pipeline/models.mjs",
+    "./project": "./src/project.mjs",
+    "./config": "./src/config.mjs",
+    "./workflow": "./src/workflow/run.mjs",
+    "./catalog": "./src/workflow/inputs.mjs"
+  }
+}

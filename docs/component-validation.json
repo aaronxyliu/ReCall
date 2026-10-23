@@ -1,0 +1,30 @@
+{
+  "status": "passed",
+  "package_version": "0.3.1",
+  "checked_at": "2026-10-23T05:33:45.040809+00:00",
+  "tests": {
+    "passed": 72,
+    "failed": 0
+  },
+  "repo_parity": {
+    "repo": "mattermost/focalboard",
+    "commit": "a84bbb65e32edf972856b329417096ac413518e9",
+    "bundler": "parcel",
+    "comparison": "/Users/aaronxyliu/GitHub/ReCall Research/ReCall Exp/results/validation/recall-0.3.1-focalboard/comparison.json",
+    "modelCalls": 0,
+    "networkAttempts": 0,
+    "identicalRecoveredPairs": true,
+    "identicalPromotionRounds": true,
+    "targets": 38,
+    "initialAnchors": 5,
+    "improvedRecovered": 37,
+    "independentBfsVerified": true
+  },
+  "preserved_original_runtime_files": 23,
+  "preserved_manuscript_evidence_files": 76,
+  "pipeline_sha256": "b6dc3b1d9b875ec27dddf08cb06502bc45dfa9ad1a7ac8fa41a7e161d0264f79",
+  "notes": [
+    "Oracle-assisted connectivity simulation, not model recovery.",
+    "Normal production behavior remains the default; external selection is explicitly injected by the experiment runner."
+  ]
+}

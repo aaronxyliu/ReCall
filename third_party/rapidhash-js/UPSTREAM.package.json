@@ -1,0 +1,53 @@
+{
+  "name": "rapidhash-js",
+  "version": "1.0.4",
+  "description": "A TypeScript implementation of Rapidhash",
+  "keywords": [
+    "hash",
+    "rapidhash"
+  ],
+  "author": {
+    "name": "KOMIYA Atsushi",
+    "url": "https://github.com/komiya-atsushi"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/komiya-atsushi/rapidhash-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/komiya-atsushi/rapidhash-js/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "test": "npm run test:jest && npm run test:attw",
+    "test:jest": "jest --verbose --coverage",
+    "test:attw": "attw --pack .",
+    "pretest": "npm run build"
+  },
+  "main": "lib/cjs/index.js",
+  "types": "lib/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "default": "./lib/cjs/index.js",
+        "types": "./lib/cjs/index.d.ts"
+      },
+      "import": {
+        "default": "./lib/esm/index.mjs",
+        "types": "./lib/esm/index.d.mts"
+      }
+    }
+  },
+  "files": [
+    "lib/**/*.*",
+    "CHANGELOG.md"
+  ],
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12.1.0",
+    "rollup": "^4.24.0"
+  }
+}

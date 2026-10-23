@@ -1,0 +1,19 @@
+{
+  "recovery": {
+    "minFeatures": 10,
+    "minAnchors": 1,
+    "topK": 5,
+    "radius": 1,
+    "libraryGate": true
+  },
+  "graph": {
+    "useModules": true,
+    "siblingWindow": 0,
+    "includeContainment": false
+  },
+  "models": {
+    "embeddingModel": "qwen3-embedding:0.6b",
+    "validationModel": "qwen3.5:27b",
+    "thinking": false
+  }
+}

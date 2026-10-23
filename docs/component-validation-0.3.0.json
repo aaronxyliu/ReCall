@@ -1,0 +1,80 @@
+{
+  "status": "passed",
+  "checked_at": "2026-10-23T05:26:32.112946+00:00",
+  "package_version": "0.3.0",
+  "node": "v24.15.0",
+  "deployed_tests": {
+    "total": 70,
+    "passed": 70,
+    "failed": 0
+  },
+  "clean_install": {
+    "command": "npm ci --offline --cache <existing-cache> --logs-max=0",
+    "preexisting_node_modules": false,
+    "vendored_node_modules": false,
+    "tests_passed": 70
+  },
+  "improvements_completed_in_order": [
+    "directory input discovery, local references, catalogs and integrity-checked npm references",
+    "canonical strict nested configuration",
+    "shared syntax project, optional POG, reusable runtime code and solved-state reuse",
+    "runtime adapters and common module IR",
+    "preflight, progress, locks, checkpoints, cancellation, compatible resume and result export",
+    "task-first documentation and command help"
+  ],
+  "integration_checks": [
+    "mock registry download, integrity validation and offline reuse",
+    "unsafe archive entries rejected",
+    "directory CLI with mock embedding/validation service",
+    "budget-limited round resumes with equivalent promotions and validation count",
+    "completed run resume performs no new inference",
+    "changed inputs, model identity, graph, settings and tool implementation checks",
+    "source/bundle graph parity between saved-plan replay and in-memory reuse",
+    "syntax-only inventory and optional POG identities agree",
+    "strict canonical configuration and config-relative paths",
+    "all 11 package export paths import",
+    "documented example preparation and static resume in actual workspace containing spaces"
+  ],
+  "preserved_original_runtime_files": 23,
+  "preserved_manuscript_evidence_files": 76,
+  "real_model_requests": 0,
+  "new_accuracy_experiments": 0,
+  "source_sha256": {
+    "components/bundler/index.mjs": "38eda9d854b866678690d4c1fee463ea4f894489d3578187e814332427ff5bcf",
+    "components/graph/index.mjs": "e0bb0773312354acae9f8a22d378d7eaa631ed0500d107d8e74b3f35c8bf3952",
+    "components/modules/index.mjs": "6d3c6abe8e4ac376e0ee5af87cb6c7821e285afd7daf2eb848ecf22dd4d851f6",
+    "components/pipeline/index.mjs": "d864dd00e4a4acd9aaa90be57ca9fd3bcf669b5cca984bc3452642b7ced1d270",
+    "components/pipeline/models.mjs": "fd925d3ffdfdd6402061143a6c5059d2872503f3aacf98c0334635b31c26acb5",
+    "components/pog/index.mjs": "90203f8432bbcfcbc577bf9b3ce5434f0d85e4be1acf74d5eec64f5628e6b4a9",
+    "src/analysis/context.mjs": "c0d040d94ba3471bc08d5a0cc89af6648de3e91868809f6fef82e1343ea4d4ca",
+    "src/analysis/lexical.mjs": "e8e89ce14f6212bed4475b3fc5efb2f89b0f159ccb518b98a7771202d8e568d7",
+    "src/analysis/measure.mjs": "875871eb6400ffb2cb8efce503759d98985a2184f59228396012a3bbbfefd85b",
+    "src/analysis/minify.mjs": "1508413c29be3c856f0fdd7c99ae4e7be1f123882dfe66cbd08e5ddd477d5585",
+    "src/analysis/parse.mjs": "b3f64792a1e3539a623295b6aafa2795a9835580fa9e27efd5af984f25ef62de",
+    "src/config.mjs": "66e130ad531c8ad28cfd15cd77df3cc5171561f7a88869d358a58c7918bbf6e8",
+    "src/engine/adapters/helpers.mjs": "69c6bf7a87a13b8e1b1d6492168ea406e40e57f7d525e1ecbc424573b3ccd821",
+    "src/engine/adapters/parcel.mjs": "b99f07e252e1866873207a10f305168ba97b897d3ca4ec57f7a32f804d64ee31",
+    "src/engine/adapters/turbopack.mjs": "ca8e69d869af4f49e620af1dd8398891f461416818e80706b5a3f1d4a394ee97",
+    "src/engine/adapters/webpack.mjs": "bd906b571562f035c281b7c793210536c284d30ec23feae3e200e52c362f03c4",
+    "src/engine/analyzer.mjs": "9b7dc791d12d63b256a651617fea24b25436b6f6cdc04d73952ccb292ff60220",
+    "src/engine/module-graph.mjs": "817444a0eed08536a0840d5b5bcd3cc12eaf3aef445e8e27a6a5d0711df43fb9",
+    "src/engine/recognition-context.mjs": "e78a5939ab552e5b1aa3f077f0f6764fc1b37b34c5418b312a895d308592e0b7",
+    "src/engine/recognize.mjs": "a8e5426c58cdcf0f2323a7899a976750ca0b1bed7f02722c8e4f2013df3ab903",
+    "src/project.mjs": "38799a1f796698ae49d49b118723f9d7f7191c111bd303889e4ca927fca9d4ef",
+    "src/shared/artifacts.mjs": "60edb538baba07db65f5fe81649fd6bf06b492b955490c51a9c2d64c88396d3d",
+    "src/workflow/inputs.mjs": "d47802ab02784b5c651c0cc7a951b2f63349a41ef8684392baa151909b26b549",
+    "src/workflow/preflight.mjs": "c379b03ae68a7d19d685615da6cbdb5620242b065001cdb7a799026a4c008915",
+    "src/workflow/run.mjs": "684719d2f3e7b084e1f0eabf91c4775212606848c1f7a808847b50b7fd727698",
+    "bin/components.mjs": "372c548dac01255e6fdb995a89e2e79f441bf6a4372395c92b7adb4a5b6827de",
+    "bin/legacy.mjs": "7dd3b74a633353b7883a6f7c6eaacf414ac05f2bfd80d068b67dc3386c82e434",
+    "bin/recall.mjs": "1ea3858ae1d77a99f91ce423e9d01186c245047c450f05008b9049d9612d5350",
+    "test/components.test.mjs": "eb1cca1d238fca221364ce7bee090281d8a23ee8f8d3d60d532f29137dd0302f",
+    "test/usability.test.mjs": "a440f1564849b91b4b8ff7923ca01fa924f40b1556ef4515b2570eda889aee7e"
+  },
+  "limitations": [
+    "A reference catalog must be supplied/built; no comprehensive npm index is shipped.",
+    "Browser capture and running reference package build scripts are outside the workflow.",
+    "Exact-path run directories are not portable resume archives.",
+    "Tests use synthetic fixtures and mock services; no new scientific recovery rates are asserted."
+  ]
+}

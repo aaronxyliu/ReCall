@@ -1,0 +1,11 @@
+{
+  "roots": [
+    "bundle"
+  ],
+  "files": [
+    {
+      "id": "bundle",
+      "path": "bundle/app.js"
+    }
+  ]
+}
