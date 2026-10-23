@@ -34,6 +34,7 @@
     "./project": "./src/project.mjs",
     "./config": "./src/config.mjs",
     "./workflow": "./src/workflow/run.mjs",
-    "./catalog": "./src/workflow/inputs.mjs"
+    "./catalog": "./src/workflow/inputs.mjs",
+    "./capture": "./components/capture/index.mjs"
   }
 }

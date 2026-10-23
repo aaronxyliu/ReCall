@@ -1,0 +1,53 @@
+{
+  "checkedDate": "2026-10-23",
+  "upstream": {
+    "repository": "https://github.com/detectify/page-fetch",
+    "commit": "5d8639a4044a41b24b316452f72e123f192c5238",
+    "mainGoSha256": "b23a213cc602fefb6f350fcb7419a3e086a54fa3a2103dcfedcf1b4ae606383e",
+    "captureLogicModified": false,
+    "build": "go build -mod=mod -o page-fetch .",
+    "buildNote": "Compiler updated only temporary go.mod go directive from 1.20 to 1.23.0; upstream main.go unchanged.",
+    "binarySha256": "d964eee05aa1f0f2bf49eb790977ac011c7455b5ec7ba3556f20f66083aa8695"
+  },
+  "localBrowserFixture": {
+    "capturedScripts": 6,
+    "parsedFunctions": 9,
+    "initialAnchors": 1,
+    "status": {
+      "status": "prepared",
+      "modelCalls": 0
+    },
+    "cases": [
+      "extensionless script",
+      "two different query versions stored by page-fetch as versioned.js and versioned.js.1",
+      "ESM relative import",
+      "delayed import after 300ms with 1200ms post-navigation delay"
+    ],
+    "bytePreservationVerified": true
+  },
+  "publicWebsite": {
+    "url": "https://lodash.com/",
+    "capturedScripts": 6,
+    "parsedFunctions": 3848,
+    "parseFailures": 0,
+    "modelCalls": 0,
+    "claim": "Capture/import and syntax parsing only; no library recovery accuracy claim. Counts are session-specific.",
+    "bytePreservationVerified": true
+  },
+  "regressionTests": {
+    "passed": 79,
+    "failed": 0,
+    "captureTests": 7,
+    "browserRequiredForStandardSuite": false
+  },
+  "upstreamDiagnostics": [
+    "The pinned upstream CDP bindings logged unknown IPAddressSpace Loopback/Local values with the installed Chrome. The tested resources were nevertheless saved and verified."
+  ],
+  "localEvidence": "outputs/validation/page-fetch/ (generated and Git-ignored)",
+  "limitations": [
+    "Network response capture only; no automatic enumeration of unrequested lazy chunks.",
+    "Inline scripts and eval/blob code are not extracted by this adapter.",
+    "Upstream metadata lacks per-frame/worker realms and HTTP status.",
+    "CLI models were never invoked."
+  ]
+}

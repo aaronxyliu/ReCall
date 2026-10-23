@@ -1,3 +1,4 @@
+import {importPageFetch} from '../components/capture/index.mjs';
 import {runDirectory} from '../src/workflow/run.mjs';
 import {preflight} from '../src/workflow/preflight.mjs';
 import {createProject} from '../src/project.mjs';
@@ -23,6 +24,9 @@ Start:
 Use --prepare-only for static preparation; --resume continues the same run.
 Use --quiet to suppress progress. All commands accept the same nested --config.
 
+Capture import (offline):
+  recall capture import-page-fetch RAW_DIRECTORY --out DIRECTORY [--page-url URL]
+
 Components:
   recall project --manifest FILE --out INVENTORY.json
   recall pog extract --manifest FILE --out INVENTORY.json
@@ -40,6 +44,7 @@ Legacy graph MANIFEST OUTPUT and recover --input DETECTOR --out DIR remain avail
 `;
 function commandHelp(command){
  const specific={
+  capture:'capture import-page-fetch RAW_DIRECTORY --out DIRECTORY [--page-url URL]\n  Imports saved responses; does not run a browser. Use a fresh output directory.',
   recover:'recover CAPTURED_DIRECTORY --references DIR | --catalog FILE --out DIR\n  --config FILE --prepare-only --resume --offline --quiet\n  Advanced: --source FILE --bundle FILE --source-graph FILE --bundle-graph FILE\n  --anchors FILE --libraries FILE --out FILE',
   run:'run --source-manifest FILE --bundle-manifest FILE --out DIR\n  --config FILE --prepare-only --resume --offline --quiet',
   preflight:'preflight CAPTURED_DIRECTORY --references DIR | --catalog FILE\n  --config FILE --prepare-only (skip model checks) --out REPORT.json (optional)',
@@ -56,7 +61,8 @@ function commandHelp(command){
 export async function componentsCLI(argv){
  if(!argv.length||['--help','-h','help'].includes(argv[0])){console.log(help);return}
  if(argv.some(x=>['--help','-h'].includes(x))){console.log(commandHelp(argv[0]));return}
- let command=argv.shift();const action=command==='pog'||command==='catalog'?argv.shift():null;
+ let command=argv.shift();const action=['pog','catalog','capture'].includes(command)?argv.shift():null;
+ const rawCapture=command==='capture'?argv.shift():null;
  const captured=['recover','preflight'].includes(command)&&argv[0]&&!argv[0].startsWith('--')?argv.shift():null;if(captured&&command==='recover')command='run';
  const boolean=new Set(['--prepare-only','--overwrite','--offline','--resume','--quiet']);const opts={};
  for(let i=0;i<argv.length;i++){
@@ -65,7 +71,7 @@ export async function componentsCLI(argv){
  }
  const shared=['--out','--config','--overwrite','--quiet'];
  const recoveryFlags=['--min-features','--feature-metric','--min-anchors','--top-k','--radius','--max-validation-calls','--cross-chunk','--library-gate','--embedding-model','--validation-model','--endpoint','--thinking','--cache'];
- const allowed={project:[...shared,'--manifest'],preflight:[...shared,'--source-manifest','--bundle-manifest','--references','--catalog','--prepare-only','--offline'],catalog:[...shared,'--references','--source-manifest'],pog:[...shared,'--manifest','--source','--bundle','--min-features','--feature-metric','--min-anchors'],bundler:[...shared,'--inventory','--directory','--hint'],modules:[...shared,'--inventory','--bundler'],graph:[...shared,'--inventory','--module-map'],recover:[...shared,...recoveryFlags,'--source','--bundle','--source-graph','--bundle-graph','--anchors','--libraries'],run:[...shared,...recoveryFlags,'--source-manifest','--bundle-manifest','--prepare-only','--references','--catalog','--offline','--resume']}[command];
+ const allowed={capture:[...shared,'--page-url'],project:[...shared,'--manifest'],preflight:[...shared,'--source-manifest','--bundle-manifest','--references','--catalog','--prepare-only','--offline'],catalog:[...shared,'--references','--source-manifest'],pog:[...shared,'--manifest','--source','--bundle','--min-features','--feature-metric','--min-anchors'],bundler:[...shared,'--inventory','--directory','--hint'],modules:[...shared,'--inventory','--bundler'],graph:[...shared,'--inventory','--module-map'],recover:[...shared,...recoveryFlags,'--source','--bundle','--source-graph','--bundle-graph','--anchors','--libraries'],run:[...shared,...recoveryFlags,'--source-manifest','--bundle-manifest','--prepare-only','--references','--catalog','--offline','--resume']}[command];
  if(!allowed)throw Error('Unknown component command: '+command);
  for(const k of Object.keys(opts))if(!allowed.includes(k))throw Error('Unknown option for '+command+': '+k);
  const required=k=>{if(!opts[k])throw Error('Required option: '+k);return opts[k]},json=k=>readJSON(required(k));
@@ -84,7 +90,12 @@ export async function componentsCLI(argv){
  if(opts['--quiet'])config.execution.progress=false;
  const output=opts['--out']?path.resolve(opts['--out']):command==='preflight'?null:path.resolve(required('--out'));
  if(command!=='run'&&command!=='preflight'&&!opts['--overwrite']&&fs.existsSync(output))throw Error('Output exists: '+output);
- if(command==='project'){write(output,createProject(required('--manifest')))}else if(command==='preflight'){
+ if(command==='capture'){
+  if(action!=='import-page-fetch'||!rawCapture||rawCapture.startsWith('--'))throw Error('Use capture import-page-fetch RAW_DIRECTORY --out DIRECTORY');
+  const result=importPageFetch(rawCapture,{output,pageURL:opts['--page-url']||null,maxFiles:config.inputs.maxFiles,maxBytes:config.inputs.maxBytes});
+  writeJSON(path.join(output,'resolved-config.json'),config);
+  console.log(JSON.stringify({importedScripts:result.importedScripts,pageURL:result.pageURL,manifest:result.manifest,report:path.join(output,'capture.json')},null,2));return;
+ }else if(command==='project'){write(output,createProject(required('--manifest')))}else if(command==='preflight'){
   const report=await preflight({captured,sourceManifest:opts['--source-manifest'],bundleManifest:opts['--bundle-manifest'],references:config.inputs.references,catalog:config.inputs.catalog,output,config,prepareOnly:!!opts['--prepare-only']});
   if(output)write(output,report);else console.log(JSON.stringify(report,null,2));if(report.status==='blocked')process.exitCode=1;return;
  }else if(command==='catalog'){

@@ -19,7 +19,7 @@ export function artifact(value,schema){
  if(!value||value.schema!==schema)throw Error(`Expected ${schema} artifact`);
  return value;
 }
-export const unitSignature=u=>({id:u.id,path:u.path,environment:u.environment||'main',runtimeGroup:u.runtimeGroup||'manifest-build',sha256:hash(u.code),library:u.library||null});
+export const unitSignature=u=>({id:u.id,path:u.path,environment:u.environment||'main',runtimeGroup:u.runtimeGroup||'manifest-build',sha256:hash(u.code),library:u.library||null,...(u.aliasPaths?.length?{aliasPaths:u.aliasPaths}:{})});
 export const inventoryDigest=x=>hash({units:x.units.map(unitSignature),functions:x.functions.map(f=>[f.id,f.unit,f.span,f.parent,hash(f.code),f.pogHash,f.propertyOperations,f.graphNodes])});
 export function checkInventory(x){
  artifact(x,'recall.inventory/v1');
@@ -46,7 +46,7 @@ export function loadManifest(input,{baseDir=process.cwd()}={}){
   if(seen.has(id))throw Error('Duplicate manifest unit ID: '+id);seen.add(id);
   const library=f.library||m.library||null;
   if(library&&(!library.name||!library.version))throw Error('Library metadata requires name and version');
-  return {id,path:filename,code:typeof f.code==='string'?f.code:fs.readFileSync(filename,'utf8'),environment:f.environment||m.environment||'main',runtimeGroup:f.runtimeGroup||m.runtimeGroup||'manifest-build',library};
+  return {id,path:filename,code:typeof f.code==='string'?f.code:fs.readFileSync(filename,'utf8'),environment:f.environment||m.environment||'main',runtimeGroup:f.runtimeGroup||m.runtimeGroup||'manifest-build',library,...(f.aliasPaths?.length?{aliasPaths:f.aliasPaths.map(p=>path.resolve(base,p))}:{})};
  });
  return {units,roots:(m.roots||[base]).map(p=>path.resolve(base,p)),context:m.context||{},origin:filename};
 }

@@ -26,8 +26,6 @@ Real-world websites commonly serve **bundled and minified JavaScript**, which ob
 
 [![ReCall connects minified website JavaScript to its library name, version, bundling strategy, and original function implementation](docs/assets/recovery-overview-polished.png)](docs/assets/recovery-overview-polished.png)
 
-*Illustrative example: linking a minified function to `lodash@4.17.21`’s original `isObject` implementation.* [Editable SVG](docs/assets/recovery-overview-polished.svg)
-
 ReCall combines **POG anchors**, **module-aware relationship graphs**, and **LLM validation**. Supply captured JavaScript and either local reference packages or a fingerprint catalog. **Source maps are not required.**
 
 - **Anchor-guided recovery.** Start from fingerprint matches and expand through corresponding source and bundle neighborhoods.
@@ -77,7 +75,60 @@ Validation uses thinking off and strict **T/F** responses. The default endpoint 
 
 ## Usage
 
-Place captured `.js`, `.mjs`, and `.cjs` files in a directory, including shared and lazy-loaded chunks needed for the analysis. Capture the page and relevant interactions before running ReCall; it analyzes the supplied files.
+### Capture from a webpage with page-fetch
+
+Use [Detectify/page-fetch](https://github.com/detectify/page-fetch) to visit a URL in Chrome/Chromium and save network response bodies. ReCall's **offline capture importer** converts those files into a bundle manifest, preserving script bytes, original URLs, and query variants.
+
+<details>
+<summary><strong>Install the tested page-fetch version</strong></summary>
+
+Install Go and Chrome/Chromium, then run from the ReCall checkout:
+
+```sh
+git clone https://github.com/detectify/page-fetch.git outputs/tools/page-fetch
+git -C outputs/tools/page-fetch checkout 5d8639a4044a41b24b316452f72e123f192c5238
+go -C outputs/tools/page-fetch build -mod=mod -o page-fetch .
+```
+
+This builds the upstream capture tool without changing its capture logic. `-mod=mod` lets Go update module bookkeeping in that external checkout. If you already have `page-fetch`, use that executable in the next command. Generated captures and downloaded tools stay under Git-ignored `outputs/`.
+
+</details>
+
+**1. Capture a URL.** Replace the example with your target. Use a fresh output directory per page/session and keep third-party resources, including CDN libraries.
+
+```sh
+printf '%s\n' 'https://lodash.com/' |
+  outputs/tools/page-fetch/page-fetch --concurrency 1 --delay 1500 \
+    --output outputs/captures/site-raw
+```
+
+**2. Import the saved responses.** Keep the `.meta` sidecars: they identify JavaScript even when filenames have no extension or end in a suffix such as `.js.1`.
+
+```sh
+node bin/recall.mjs capture import-page-fetch outputs/captures/site-raw \
+  --out outputs/captures/site-input
+```
+
+This writes `bundle.json`, `capture.json` (URLs, hashes, and diagnostics), and unchanged JavaScript bodies under `files/`. If one raw directory contains several seed URLs, add `--page-url 'https://your-site.example/page'` to select one. Conflicting bodies for the same URL require a fresh capture.
+
+**3. Prepare recovery.** Supply reference packages and a configuration as described below:
+
+```sh
+cp examples/recall.config.json recall.json
+
+node bin/recall.mjs run \
+  --bundle-manifest outputs/captures/site-input/bundle.json \
+  --references ./reference-packages \
+  --config recall.json --prepare-only --out outputs/site
+```
+
+You can substitute `--catalog ./library-catalog.json` for `--references`. To continue with the configured models, repeat the command with `--resume` instead of `--prepare-only`. Use the generated **manifest**, rather than passing `files/` to directory discovery, so extensionless scripts and URL aliases are retained.
+
+The delay captures some automatically requested late resources; it does not enumerate every lazy chunk. The tested upstream collector has a ten-second per-page timeout, and this adapter does not extract inline scripts or infer separate iframe/worker realms. Inspect capture logs, `capture.json`, and ReCall parse diagnostics. See the [capture guide](components/capture/README.md) for input handling, resolution boundaries, and troubleshooting.
+
+### Choose reference inputs
+
+For JavaScript collected by other means, place `.js`, `.mjs`, and `.cjs` files in a directory, including shared and lazy-loaded chunks needed for the analysis. Capture the page and relevant interactions before running ReCall; it analyzes the supplied files.
 
 Choose how to provide the reference implementations:
 
@@ -213,10 +264,11 @@ Resolution follows mechanisms present in the code. Compatible outputs can leave 
 
 ## Components
 
-The five components have standalone commands and JavaScript APIs. They exchange versioned JSON artifacts and share one configuration format.
+The capture adapter and five analysis components have standalone commands and JavaScript APIs. They exchange JSON artifacts and share one configuration format.
 
 | Component | Purpose | Guide |
 |---|---|---|
+| Webpage capture import | Convert page-fetch responses to a bundle manifest with URL provenance | [Capture](components/capture/README.md) |
 | POG features and identification | Generate fingerprints, anchors, and library/version evidence | [POG](components/pog/README.md) |
 | Bundler identifier | Collect structural evidence and candidate bundler families | [Bundler](components/bundler/README.md) |
 | Module-map resolver | Resolve imports, exports, bindings, and chunk relationships | [Modules](components/modules/README.md) |
@@ -261,6 +313,7 @@ Module maps optionally enrich the source and bundle graphs; graph construction c
 
 | I want to… | Read |
 |---|---|
+| Capture website JavaScript with page-fetch | [Capture guide](components/capture/README.md) |
 | Prepare real inputs and run recovery | [Quickstart](docs/quickstart.md) |
 | Find or customize the validation prompt | [Prompt customization](#customize-the-validator-prompt) |
 | Change models, thresholds, or graph settings | [Configuration reference](docs/configuration.md) |
@@ -268,6 +321,10 @@ Module maps optionally enrich the source and bundle graphs; graph construction c
 | Add support for another runtime format | [Adapter development](docs/adapters.md) |
 | Diagnose a failed or incomplete run | [Troubleshooting](docs/troubleshooting.md) |
 | Update an earlier component setup | [Migration guide](docs/migration-0.3.md) |
+
+## Roadmap
+
+- [ ] **Automatic lazy-loading code extraction:** discover and recursively download unrequested chunks from imports, bundler runtime mappings, and available manifests. Record the distinction between browser-observed and additionally discovered code. Current page-fetch capture collects resources requested during the visit.
 
 ## Development and research
 

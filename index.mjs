@@ -1,3 +1,4 @@
+export * as capture from './components/capture/index.mjs';
 export * as pog from './components/pog/index.mjs';
 export * as bundler from './components/bundler/index.mjs';
 export * as modules from './components/modules/index.mjs';
