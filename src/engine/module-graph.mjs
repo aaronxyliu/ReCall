@@ -13,10 +13,11 @@ export function moduleGraph(a){
  function owner(c){if(!c.span)return[];const rs=intervals.get(c.unit)||[];let lo=0,hi=rs.length;while(lo<hi){const m=(lo+hi)>>>1;if(rs[m].start<=c.span[0])lo=m+1;else hi=m}const r=rs[lo-1];return r&&r.end>=c.span[1]?r.keys:[]}
  function edge(c,target,kind,instances){const fromModules=owner(c),toUnits=[...new Set(instances.map(m=>m.unit))],e={fromUnit:c.unit,fromModules,toModule:target,toUnits,kind,span:c.span,status:instances.length?'supplied':'not-supplied'};const key=JSON.stringify(e);if(!seen.has(key)){seen.add(key);dependencies.push(e)}}
  for(const c of a.calls)for(const t of a.values[c.a]){
-  if(t.startsWith('require:')&&c.literals[0]!=null){const key=t.slice(8)+':'+c.literals[0];edge(c,key,'runtime-require',a.modules.get(key)||[])}
+  if(a.tokens.get(t)?.type==='parcel-require'){const id=a.parcelRequest(t,c.literals[0]),meta=a.tokens.get(t);if(id!=null){const key='parcel:'+meta.namespace+':'+id;edge(c,key,'parcel-local-require',a.modules.get(key)||[])}}
+  else if(t.startsWith('require:')&&c.literals[0]!=null){const key=t.slice(8)+':'+c.literals[0];edge(c,key,'runtime-require',a.modules.get(key)||[])}
   else if(t.startsWith('contextMethod:')){const m=t.slice(14),split=m.indexOf(':context:'),method=m.slice(0,split),ctx=a.tokens.get(m.slice(split+1));if(ctx&&['r','i'].includes(method)&&c.literals[0]!=null){const key='turbopack:'+ctx.namespace+':'+c.literals[0];edge(c,key,method==='r'?'runtime-require':'runtime-namespace-import',a.modules.get(key)||[])}}
   else if(t.startsWith('thunk:'))edge(c,t,'lazy-commonjs-require',(moduleByKey.get(t)||[]));
-  else if(t.startsWith('sourceRequire:')&&c.literals[0]!=null){const u=a.unitById.get(c.unit),target=a.resolvePath(u,c.literals[0]);edge(c,'source:'+c.literals[0],'source-require',target?[{unit:target.id}]:[])}
+  else if(t.startsWith('sourceRequire:')&&c.literals[0]!=null){const u=a.unitById.get(c.unit),target=a.resolvePath(u,c.literals[0],'require');edge(c,'source:'+c.literals[0],'source-require',target?[{unit:target.id}]:[])}
  }
  for(const l of a.links){const target=a.resolvePath(l.u,l.request);edge({unit:l.u.id,span:null},'esm:'+l.request,l.kind==='star'?'esm-reexport':l.kind==='dynamic'?'literal-dynamic-import':'esm-import',target?[{unit:target.id}]:[])}
  const exports=[],bindings=[];

@@ -16,6 +16,7 @@ export function recognize(input,{adapters=runtimeAdapters}={}) {
 export function validateRecognition(result){
  for(const r of result.registrations){
   if(!['webpack','rspack','turbopack','parcel'].includes(r.kind)||typeof r.namespace!=='string'||!r.namespace||typeof r.id!=='string'||!r.node?.range||!/^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression)$/.test(r.node.type)||typeof r.mechanism!=='string')throw Error('Adapter emitted an invalid module registration');
+  if(r.parameterRoles!=null&&(r.kind!=='parcel'||r.parameterRoles!=='require-module-exports'||!r.dependencies||typeof r.dependencies!=='object'||Array.isArray(r.dependencies)||Object.values(r.dependencies).some(v=>v!==null&&typeof v!=='string')))throw Error('Adapter emitted invalid Parcel dependency metadata');
  }
  for(const l of result.loaders)if(!l.namespace||!l.requireNode?.range)throw Error('Adapter emitted an invalid loader binding');
  for(const l of result.parcelLoaders)if(!l.namespace||!l.node?.range)throw Error('Adapter emitted an invalid Parcel loader binding');

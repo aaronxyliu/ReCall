@@ -6,7 +6,7 @@ This component parses JavaScript and extracts a Property-Order Graph (POG) finge
 
 The same inventory supports two decisions:
 
-1. **Function anchors:** match a fingerprint only when it is unique in the eligible reference pool and unique in a target chunk. A source function can anchor separate copies in different chunks.
+1. **Function anchors:** match every eligible bundled occurrence of a fingerprint that is unique in the eligible reference pool. A source function can anchor multiple copies within the same chunk and across chunks; POG equality alone establishes these anchors.
 2. **Library/version candidates:** for each versioned reference library, count distinct eligible reference functions with matching fingerprints in the captured code. Report `detected: true` when this count reaches `minAnchors`. Multiple copies of one matched function do not count as multiple anchors. All passing versions remain candidates.
 
 This is the requested configurable anchor-count rule. It is **not** a reproduction of DEBUN's complete weighted library/version scoring, and passing a threshold is heuristic evidence rather than a proof of presence. Supplying multiple indistinguishable reference versions can prevent globally unique function anchors. Keep that ambiguity or supply a separately justified version selection.
@@ -47,7 +47,7 @@ Paths and allowed roots are relative to the manifest. Per-file `library` can ove
 | `minFeatures` | `--min-features` | 10 | Minimum feature count on both sides |
 | `featureMetric` | `--feature-metric` | `propertyOperations` | `propertyOperations` or `graphNodes` |
 | `minAnchors` | `--min-anchors` | 3 | Required distinct matching source functions per library/version |
-| `uniqueBundle` | JSON config | `true` | Require at least one chunk with a unique fingerprint occurrence for library evidence |
+| `uniqueBundle` | JSON config | `false` | Require at least one chunk with a unique fingerprint occurrence for library evidence |
 
 `propertyOperations` counts syntactic own-body property-operation occurrences, **not distinct properties or POG graph nodes**. Repeated reads/writes count repeatedly. Use `graphNodes` explicitly for a node-count threshold. Fingerprint generation itself does not discard smaller functions; thresholds affect identification only.
 

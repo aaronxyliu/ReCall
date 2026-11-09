@@ -3,7 +3,7 @@ import {parseModule} from '../../src/analysis/parse.mjs';
 import {recognize} from '../../src/engine/recognize.mjs';
 import {checkInventory} from '../../src/shared/artifacts.mjs';
 
-export const families=['webpack','rspack','esbuild','rollup','rolldown','turbopack','parcel'];
+export const families=['webpack','rspack','vite','esbuild','rollup','rolldown','turbopack','parcel','bun'];
 const fn=n=>/^(FunctionDeclaration|FunctionExpression|ArrowFunctionExpression)$/.test(n?.type);
 export function recognitionInput(unit){
  const ast=parseModule(unit.code,{next:true,ranges:true}),bind=new WeakMap(),parent=new WeakMap(),owner=new WeakMap(),nodes=[];

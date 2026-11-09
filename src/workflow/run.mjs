@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {matchingMultiplicity} from '../shared/matches.mjs';
 import path from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {normalizeConfig} from '../config.mjs';
@@ -24,7 +25,7 @@ export function summarizeRecovery(result,bundle){
   const reason=queries.length?queries.some(q=>q.status==='identity-conflict')?'identity-conflict':queries.some(q=>q.status==='pending')?'pending-round':checks.some(c=>c.verdict==='error'||c.verdict==='invalid')?'validation-error-or-invalid':checks.length?'model-rejected':'no-ranked-candidate':f.code.length>result.configuration.maxCodeCharacters?'code-size-limit':'unqueried';
   reasons[reason]=(reasons[reason]||0)+1;return {functionId:f.id,reason};
  });
- return {schema:'recall.summary/v1',status:result.status,parsedTargetFunctions:bundle.functions.length,anchorFunctions:result.promotions.filter(p=>p.kind==='pog-anchor').length,modelRecoveredFunctions:result.promotions.filter(p=>p.kind==='model-recovered').length,recoveredFunctions:accepted.size,recoveryCoverage:bundle.functions.length?accepted.size/bundle.functions.length:null,unrecoveredReasons:reasons,unrecovered:classifications,parseFailures:bundle.diagnostics.filter(d=>d.kind==='parse-error'),validationCalls:result.stats.validationCalls,elapsedMs:result.stats.elapsedMs,accuracy:null,policy:'Coverage denominator is enumerated functions in supplied JavaScript; parse failures are reported separately. Accuracy requires independent ground truth. Unqueried is not proof of disconnection.'};
+ return {schema:'recall.summary/v1',status:result.status,multipleMatches:matchingMultiplicity(result.promotions),acceptedPairs:result.promotions.length,astRecoveredFunctions:new Set(result.promotions.filter(p=>p.kind==='ast-recovered').map(p=>p.bundleId)).size,parsedTargetFunctions:bundle.functions.length,anchorFunctions:result.promotions.filter(p=>p.kind==='pog-anchor').length,modelRecoveredFunctions:result.promotions.filter(p=>p.kind==='model-recovered').length,recoveredFunctions:accepted.size,recoveryCoverage:bundle.functions.length?accepted.size/bundle.functions.length:null,unrecoveredReasons:reasons,unrecovered:classifications,parseFailures:bundle.diagnostics.filter(d=>d.kind==='parse-error'),validationCalls:result.stats.validationCalls,elapsedMs:result.stats.elapsedMs,accuracy:null,policy:'Coverage denominator is enumerated functions in supplied JavaScript; parse failures are reported separately. Accuracy requires independent ground truth. Unqueried is not proof of disconnection.'};
 }
 function resumeSettings(config){const copy=structuredClone(config);delete copy.execution;delete copy.recovery.maxRounds;delete copy.recovery.maxValidationCalls;return copy}
 export async function runDirectory({output,config={},prepareOnly=false,resume=false,onProgress,signal,...input}) {

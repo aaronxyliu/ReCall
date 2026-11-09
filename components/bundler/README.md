@@ -4,10 +4,11 @@
 
 The identifier examines AST structure and lexical bindings to recognize module registrations and loader protocols. It reuses structural runtime patterns without running the bundle or solving the function graph. Outputs retain per-unit evidence, candidate families, uncertainty, and recognition errors.
 
-Supported family labels are webpack, Rspack, esbuild, Rollup, Rolldown, Turbopack, and Parcel. A label is not always uniquely inferable:
+Supported family labels are webpack, Rspack, Vite, esbuild, Rollup, Rolldown, Turbopack, Parcel, and Bun. A label is not always uniquely inferable:
 
 - Webpack-compatible factory tables may be emitted by either webpack or Rspack.
 - ESM links and generic CommonJS/getter helpers can be compatible with esbuild, Rollup, or Rolldown.
+- Vite and Bun are accepted as explicit labels in configuration and the API. Generic ESM/CommonJS evidence alone does not uniquely identify those build tools.
 - Unmarked flattened code may provide no reliable evidence; it remains `unknown`.
 - Turbopack and Parcel registrations can provide more specific protocol evidence.
 
@@ -34,7 +35,7 @@ The minimal example deliberately produces a webpack/Rspack-compatible ambiguous 
 
 Input: `recall.inventory/v1` from the POG component. Output: `recall.bundler/v1`, containing `inputDigest`, `family` (possibly null), `candidates`, `status`, `hint`, and `units[].evidence`/`diagnostics`.
 
-The API is `identifyBundler(inventory, {hint: null})`. CLI `--hint` accepts one of the seven family names. `--config` can provide `{ "bundler": {"hint": "rspack"} }`; an explicit CLI hint takes precedence. Existing output files are protected unless `--overwrite` is supplied.
+The API is `identifyBundler(inventory, {hint: null})`. CLI `--hint` accepts one of the supported family names. `--config` can provide `{ "bundler": {"hint": "rspack"} }`; an explicit CLI hint takes precedence. Existing output files are protected unless `--overwrite` is supplied.
 
 ```js
 import {identifyBundler} from './components/bundler/index.mjs';

@@ -2,9 +2,9 @@
 
 ## High-level method
 
-The pipeline consumes source/bundle inventories, graphs with the same function identities, and POG anchors. Each round freezes the accepted mapping, finds unmatched bundled functions near accepted anchors, and collects source neighbors of the corresponding reference anchors. It excludes source identities already allocated in that target chunk, ranks remaining candidates by embedding cosine similarity, and validates up to `topK` in order. The first `T` becomes a proposal. Conflicting proposals for one source identity in the same chunk are rejected together; accepted proposals become anchors for the next round.
+The pipeline consumes source/bundle inventories, graphs with the same function identities, and POG anchors. It finds unmatched bundled functions near accepted anchors and collects source neighbors of the corresponding reference anchors. By default, it checks candidates for an AST match before embedding and ranking (`astBeforeRanking:true`); the first match is accepted immediately and can anchor later targets in the same pass. If none matches, it ranks candidates by embedding cosine similarity and validates up to `topK` (default `3`) in order, stopping at the first acceptance. Model-accepted proposals pass through the configured conflict policy at round end. Source identities remain reusable across bundled targets, including within a chunk.
 
-The graph inputs can be local or module-aware. The pipeline does not contain bundler-specific search logic. Cross-chunk propagation is optional, while source allocation remains per target chunk. It never reads source maps, oracle matches, or experiment result directories. A model acceptance is a heuristic identity judgment, not a proof of semantic equivalence. Initial-anchor errors can still propagate; accepted matches are not automatically rolled back.
+The graph inputs can be local or module-aware. The pipeline does not contain bundler-specific search logic. Cross-chunk propagation is optional, while source identities can be reused within and across target chunks. Each unmatched target stops at its first accepted source. It never reads source maps, oracle matches, or experiment result directories. A model acceptance is a heuristic identity judgment, not a proof of semantic equivalence. Initial-anchor errors can still propagate; accepted matches are not automatically rolled back.
 
 ## Deployment
 
@@ -51,7 +51,8 @@ The pipeline JSON has `recovery`, `models`, `graph`, `modules`, and optional `bu
     "featureMetric": "propertyOperations",
     "minAnchors": 3,
     "libraryGate": true,
-    "topK": 5,
+    "topK": 3,
+    "astBeforeRanking": true,
     "radius": 1,
     "minSimilarity": -1,
     "sourceRepresentation": "minified",
@@ -119,6 +120,6 @@ Use `recall recover CAPTURED_DIRECTORY` for automatic input preparation, preflig
 
 ## Connectivity simulation for experiment adapters
 
-The low-level `recoverFunctions` and `runPipeline` APIs accept an optional `candidateSelector({bundle,candidates,round,parentBundleIds})` callback. It returns a candidate source ID or `null`. Selection outside the computed neighborhood is rejected. This mode bypasses source minification, embeddings, ranking/top-k, validation, and model-client creation, while retaining graph neighborhoods, character limits, per-chunk allocation, synchronous rounds, and conflict handling. Outputs are labeled `selectionMode:external-neighborhood-selector` and promotions `externally-selected`; they are not model-recovery measurements.
+The low-level `recoverFunctions` and `runPipeline` APIs accept an optional `candidateSelector({bundle,candidates,round,parentBundleIds})` callback. It returns a candidate source ID or `null`. Selection outside the computed neighborhood is rejected. This mode bypasses source minification, embeddings, ranking/top-k, validation, and model-client creation, while retaining graph neighborhoods, character limits, source reuse across bundled copies, synchronous rounds, and conflict handling. Outputs are labeled `selectionMode:external-neighborhood-selector` and promotions `externally-selected`; they are not model-recovery measurements.
 
 Ground truth belongs only in the experiment-side callback. Production components do not load it. The callback can choose the ground-truth source if it is in the supplied candidate pool, implementing the connectivity simulation protocol. Keep initial seeds, eligibility, graph options, and denominators fixed when comparing recorded experiments. This is an API-level evaluation hook, not a webpage recovery CLI default.

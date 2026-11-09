@@ -10,7 +10,12 @@ export function createProject(manifest,options={}) {
    const scan=enumerate(unit.code),byNode=new Map(scan.functions.map(f=>[f.node,`${unit.id}:${f.node.range.join(':')}`]));
    for(const f of scan.functions.sort((a,b)=>a.node.range[0]-b.node.range[0]||b.node.range[1]-a.node.range[1])){
     let parent=scan.parents.get(f.node);while(parent&&!byNode.has(parent))parent=scan.parents.get(parent);
-    const record={id:byNode.get(f.node),unit:unit.id,file:unit.path,span:f.node.range,name:f.name||'<anonymous>',parent:parent?byNode.get(parent):null,code:unit.code.slice(...f.node.range),library:unit.library,pogHash:null,propertyOperations:0,graphNodes:0,extractionStatus:'not-requested'};
+    // Retain the existing function-value span/ID used by graphs and scoring.
+    // The separate code span includes the method key and modifiers for parsing.
+    const syntaxParent=scan.parents.get(f.node);
+    const method=syntaxParent?.type==='MethodDefinition'||syntaxParent?.type==='Property'&&(syntaxParent.method||['get','set'].includes(syntaxParent.kind));
+    const codeSpan=method?syntaxParent.range:f.node.range;
+    const record={id:byNode.get(f.node),unit:unit.id,file:unit.path,span:f.node.range,...(method?{codeSpan}:{}),name:f.name||'<anonymous>',parent:parent?byNode.get(parent):null,code:unit.code.slice(...codeSpan),library:unit.library,pogHash:null,propertyOperations:0,graphNodes:0,extractionStatus:'not-requested'};
     functionIds.push(record.id);functions.push(record);nodes.set(record.id,f.node);
    }
   }catch(error){diagnostics.push({kind:'parse-error',unit:unit.id,error:error.message})}

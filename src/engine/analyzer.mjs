@@ -1,8 +1,9 @@
-import {applyHelperSummaries} from './adapters/helpers.mjs';
+import {applyHelperSummaries,capturedNamespaceReturn} from './adapters/helpers.mjs';
 // Component engine port; historical experiment implementation is retained unchanged.
 // Code-only, allocation-site, flow-insensitive relationship analysis. No oracle imports.
 import path from 'node:path';
-import {parseModule} from '../analysis/parse.mjs';
+import {createSourceResolver} from '../analysis/source-resolution.mjs';
+import {graphPrograms,graphLanguage} from '../analysis/graph-syntax.mjs';
 import * as eslintScope from 'eslint-scope';
 import {recognize,constant} from './recognize.mjs';
 const isFn=n=>/^(FunctionExpression|FunctionDeclaration|ArrowFunctionExpression)$/.test(n?.type);
@@ -27,12 +28,22 @@ export class Analyzer {
  read(a,k,b){this.rule({op:'read',a,k,b},[a])}
  write(a,k,b){this.rule({op:'write',a,k,b},[a,b])}
  namespace(id){return this.constant(this.object('ns:'+id))}
+ promise(key){const token='promise:'+key;if(!this.tokens.has(token))this.tokens.set(token,{type:'promise',value:this.slot()});return token}
+ parcelRequest(token,request){const meta=this.tokens.get(token);if(request==null)return null;return Object.hasOwn(meta.dependencies,request)?meta.dependencies[request]:request}
  register(kind,namespace,id,f){const k=kind+':'+namespace+':'+id;let ms=this.modules.get(k);if(!ms)this.modules.set(k,ms=[]);ms.push(f);this.stats.modules[kind]++;return k}
- resolvePath(u,request){if(!request?.startsWith('.'))return null;const p=path.posix.normalize(path.posix.join(path.posix.dirname(u.path),request));for(const x of [p,p+'.js',p+'.mjs',p+'.cjs',p+'/index.js'])if(this.paths.has(u.environment+'|'+x))return this.paths.get(u.environment+'|'+x);return null}
+ resolvePath(u,request,kind='import'){this.sourceResolver??=createSourceResolver(this.units);return this.sourceResolver.resolve(u,request,kind)}
  addUnit(spec){
-  const u={id:spec.id,path:path.posix.normalize(spec.path),environment:spec.environment||'main',runtimeGroup:spec.runtimeGroup,exports:this.object('ns:'+spec.id),cjs:this.object('cm:'+spec.id),unresolved:[],functions:0};this.units.push(u);this.unitById.set(u.id,u);this.paths.set(u.environment+'|'+u.path,u);for(const p of spec.aliasPaths||[])this.paths.set(u.environment+'|'+path.posix.normalize(p),u);
+  if(!spec.graphAst){
+   let programs;try{programs=graphPrograms(spec.code,spec.path)}catch(e){this.errors.push({unit:spec.id,error:e.message});return}
+   if(graphLanguage(spec.path)==='component')this.diagnostics.push({kind:'component-template-not-modeled',unit:spec.id});
+   if(!programs.length)programs=[{ast:{type:'Program',body:[],sourceType:'module',range:[0,0]},scope:'module'}];
+   for(let i=0;i<programs.length;i++)this.addUnit({...spec,id:i?spec.id+':'+programs[i].scope:spec.id,path:i?spec.path+'.'+programs[i].scope+'.js':spec.path,graphAst:programs[i].ast});
+   return;
+  }
+  this.sourceResolver=null;
+  const u={id:spec.id,path:path.posix.normalize(spec.path),environment:spec.environment||'main',runtimeGroup:spec.runtimeGroup,exports:this.object('ns:'+spec.id),cjs:this.object('cm:'+spec.id),unresolved:[],functions:0,library:spec.library||null,packageRoot:spec.packageRoot,packageInfo:spec.packageInfo,aliasPaths:spec.aliasPaths||[]};this.units.push(u);this.unitById.set(u.id,u);this.paths.set(u.environment+'|'+u.path,u);for(const p of spec.aliasPaths||[])this.paths.set(u.environment+'|'+path.posix.normalize(p),u);
   const initial=this.object('ce:'+u.id);this.seed(this.property(u.cjs,'exports'),initial);
-  let ast;try{ast=parseModule(spec.code,{next:true,ranges:true,loc:false})}catch(e){this.errors.push({unit:u.id,error:e.message});return}
+  const ast=spec.graphAst;
   const bind=new WeakMap(),declared=new WeakMap(),owner=new WeakMap(),parent=new WeakMap(),receivers=new WeakMap(),fnToken=new WeakMap(),classToken=new WeakMap(),cache=new WeakMap(),nodes=[],inv=new Map((spec.functions||[]).map(f=>[f.span.join(':'),f]));
   const scopes=eslintScope.analyze(ast,{ecmaVersion:2022,sourceType:'module',optimistic:true,ignoreEval:true});
   for(const sc of scopes.scopes)for(const v of sc.variables){const s=this.slot();for(const n of v.identifiers){bind.set(n,s);let ds=declared.get(n);if(!ds)declared.set(n,ds=[]);ds.push(s)}for(const r of v.references)bind.set(r.identifier,s)}
@@ -41,6 +52,7 @@ export class Analyzer {
    if(isFn(n)){const t='f:'+u.id+':'+n.range[0];fnToken.set(n,t);if(n.type!=='ArrowFunctionExpression')r=p?.type==='MethodDefinition'?(p.static?c:'i:'+c):'i:'+t;this.object('i:'+t);this.object(t);const f={type:'function',unit:u.id,inventory:spec.functions?inv.get(n.range.join(':'))?.id:u.id+':'+n.range.join(':'),span:n.range,params:n.params.map(x=>bind.get(x)??this.slot()),ret:this.slot(),summary:null,flow:null};this.tokens.set(t,f);o=t;u.functions++}
    owner.set(n,o);receivers.set(n,r);nodes.push(n);for(const x of children(n).reverse())stack.push({n:x,o,r,c,p:n});
   }
+  u.esm=nodes.some(n=>n.type.startsWith('Export'));
   this.stats.astNodes+=nodes.length;
   const declare=(n,s)=>{for(const d of declared.get(n)||[])this.copy(s,d)};
   const expr=n=>{
@@ -60,28 +72,30 @@ export class Analyzer {
     const a=expr(n.callee),args=n.arguments.map(expr),c={op:'call',a,args,b:s,literals:n.arguments.map(literal),array:n.arguments[0]?.type==='ArrayExpression'?n.arguments[0].elements.map(x=>({literal:literal(x),slot:expr(x)})):null,unit:u.id,owner:owner.get(n),span:n.range,immediate:isFn(n.callee),member:n.callee.type==='MemberExpression'?{object:expr(n.callee.object),key:prop(n.callee)}:null};
     this.rule(c,[a,...args,...(c.member?[c.member.object]:[])]);this.calls.push(c);return s
    }
-   if(n.type==='ImportExpression'){const request=literal(n.source);if(request!=null)this.links.push({u,request,kind:'dynamic',slot:s});else u.unresolved.push({kind:'nonconstant-dynamic-import',request:null,span:n.range});return s}
+   if(n.type==='ImportExpression'){const request=literal(n.source),token=this.promise(u.id+':'+n.range[0]);this.seed(s,token);if(request!=null)this.links.push({u,request,kind:'dynamic',slot:this.tokens.get(token).value});else u.unresolved.push({kind:'nonconstant-dynamic-import',request:null,span:n.range});return s}
    if(n.type==='SequenceExpression'){this.copy(expr(n.expressions.at(-1)),s);return s}
    if(n.type==='AssignmentExpression'){this.copy(expr(n.right),s);return s}
    if(n.type==='ConditionalExpression'){this.copy(expr(n.consequent),s);this.copy(expr(n.alternate),s);return s}
    if(n.type==='LogicalExpression'){this.copy(expr(n.left),s);this.copy(expr(n.right),s);return s}
-   if(n.type==='ChainExpression'||n.type==='AwaitExpression')this.copy(expr(n.expression||n.argument),s);
+   if(n.type==='AwaitExpression'){const a=expr(n.argument);this.rule({op:'fulfilled',a,b:s},[a])}
+   if(n.type==='ChainExpression')this.copy(expr(n.expression),s);
    return s;
   };
   const assign=(n,v)=>{if(n?.type==='Identifier')this.copy(v,expr(n));else if(n?.type==='MemberExpression'&&prop(n)!=null)this.write(expr(n.object),prop(n),v);else if(n?.type==='ObjectPattern'){for(const p of n.properties)if(p.type==='Property'&&field(p)!=null){const q=this.slot();this.read(v,field(p),q);assign(p.value,q)}}else if(n?.type==='AssignmentPattern')assign(n.left,v)};
+  for(const n of nodes)if(isFn(n))n.params.forEach((p,i)=>assign(p,this.tokens.get(fnToken.get(n)).params[i]));
   applyHelperSummaries.call(this,{nodes,bind,owner,fnToken,expr,spec});
   for(const n of nodes)if(isFn(n)){
    const f=this.tokens.get(fnToken.get(n)),body=n.body.type==='BlockStatement'?n.body.body:null;
    const ret=body?.length===1&&body[0].type==='ReturnStatement'?body[0].argument:!body?n.body:null;
-   if(!ret)continue;let base=ret;const fields=[];while(base?.type==='MemberExpression'&&prop(base)!=null){fields.unshift(prop(base));base=base.object}
+   if(!ret){const value=capturedNamespaceReturn(n,{bind,owner,token:fnToken.get(n)});if(value)f.flow={kind:'value',slot:expr(value)};continue}let base=ret;const fields=[];while(base?.type==='MemberExpression'&&prop(base)!=null){fields.unshift(prop(base));base=base.object}
    const index=n.params.findIndex(p=>p.type==='Identifier'&&base?.type==='Identifier'&&bind.get(p)===bind.get(base));
-   if(index>=0)f.flow={kind:'parameter',index,fields};else if(ret.type==='Identifier'||isFn(ret)||classToken.has(ret))f.flow={kind:'value',slot:expr(ret)};
+   if(index>=0)f.flow={kind:'parameter',index,fields};else if(ret.type==='Identifier'||isFn(ret)||classToken.has(ret)||ret.type==='ImportExpression'||ret.type==='AwaitExpression')f.flow={kind:'value',slot:expr(ret)};
   }
-  const factory=(n,kind,namespace,id)=>{
+  const factory=(n,kind,namespace,id,registration={})=>{
    if(!fnToken.has(n))return;const f=this.tokens.get(fnToken.get(n)),mt=this.object('module:'+kind+':'+namespace+':'+id+':'+u.id),et=this.object('exports:'+mt),out=this.property(mt,'exports');this.seed(out,et);this.register(kind,namespace,id,{out,unit:u.id,factory:fnToken.get(n),esm:!!f.contextExports});
    const seed=(i,t)=>{if(f.params[i]!=null)this.seed(f.params[i],t)};
    if(kind==='rspack'||kind==='webpack'){seed(0,mt);seed(1,et);seed(2,'require:'+kind+':'+namespace)}
-   if(kind==='parcel'){seed(0,mt);seed(1,et)}
+   if(kind==='parcel'){if(registration.parameterRoles==='require-module-exports'){const token='parcel-require:'+namespace+':'+id+':'+u.id;this.tokens.set(token,{type:'parcel-require',namespace,dependencies:registration.dependencies});seed(0,token);seed(1,mt);seed(2,et)}else{seed(0,mt);seed(1,et)}}
    if(kind==='turbopack'){seed(0,'context:'+namespace+':'+id+':'+u.id);seed(1,mt);seed(2,et);this.tokens.set('context:'+namespace+':'+id+':'+u.id,{type:'context',namespace,id,out,module:mt,unit:u.id})}
   };
   const astOwner=new WeakMap(),fnNodes=new Map(nodes.filter(isFn).map(n=>[fnToken.get(n),n]));for(const n of nodes)astOwner.set(n,fnNodes.get(owner.get(n)));
@@ -94,7 +108,7 @@ export class Analyzer {
   }else recognition=recognize({nodes,bind,parent,owner:astOwner,unit:u,code:spec.code});
   this.recordedPlans[u.id]={registrations:recognition.registrations.map(({node,...r})=>({...r,span:node.range})),loaders:recognition.loaders.map(({requireNode,rows,...l})=>({...l,span:requireNode.range})),parcelLoaders:recognition.parcelLoaders.map(({node,...l})=>({...l,span:node.range})),diagnostics:recognition.diagnostics};
   this.diagnostics.push(...recognition.diagnostics);
-  const recognized=new Set();for(const r of recognition.registrations){const k=r.kind+'|'+r.namespace+'|'+r.id+'|'+r.node.range.join(':');if(recognized.has(k))continue;recognized.add(k);factory(r.node,r.kind,r.namespace,r.id)}
+  const recognized=new Set();for(const r of recognition.registrations){const k=r.kind+'|'+r.namespace+'|'+r.id+'|'+r.node.range.join(':');if(recognized.has(k))continue;recognized.add(k);factory(r.node,r.kind,r.namespace,r.id,r)}
   for(const l of recognition.loaders)this.seed(expr(l.requireNode),'require:webpack:'+l.namespace);
   for(const l of recognition.parcelLoaders)this.seed(expr(l.node),'require:parcel:'+l.namespace);
 
@@ -111,7 +125,7 @@ export class Analyzer {
     if(n.declaration){const ns=n.declaration.type==='VariableDeclaration'?n.declaration.declarations.map(x=>x.id):[n.declaration.id];for(const x of ns)if(x?.type==='Identifier')this.copy(expr(x),this.property(u.exports,x.name))}
     for(const p of n.specifiers){const out=this.property(u.exports,p.exported.name??literal(p.exported));if(n.source)this.links.push({u,request:n.source.value,kind:'import',key:p.local.name??literal(p.local),slot:out});else this.copy(expr(p.local),out)}
    }
-   if(n.type==='ExportAllDeclaration')this.links.push({u,request:n.source.value,kind:'star',slot:this.constant(u.exports)});
+   if(n.type==='ExportAllDeclaration')this.links.push({u,request:n.source.value,kind:n.exported?'namespace':'star',slot:n.exported?this.property(u.exports,n.exported.name??literal(n.exported)):this.constant(u.exports)});
    if(n.type==='Identifier'&&owner.get(n)){const p=parent.get(n);if(p&&!(p.type==='MemberExpression'&&!p.computed&&p.property===n)&&!(p.type==='Property'&&!p.computed&&p.key===n&&!p.shorthand)&&!p.type.startsWith('Import')&&p.type!=='ExportSpecifier'&&!(p.type==='VariableDeclarator'&&p.id===n)&&!((isFn(p)||p.type.startsWith('Class'))&&p.id===n))this.refs.push({owner:owner.get(n),slot:expr(n),unit:u.id,span:n.range})}
   }
  }
@@ -119,7 +133,7 @@ export class Analyzer {
  copyObject(a,b){this.rule({op:'spread',a,b},[a,b])}
  moduleRead(kind,namespace,id,b,ruleIndex){const xs=this.modules.get(kind+':'+namespace+':'+id);if(!xs)return false;for(const x of xs){this.watch[x.out].add(ruleIndex);for(const v of this.values[x.out])this.add(b,v)}return true}
  solve(){
-  for(const l of this.links){const target=this.resolvePath(l.u,l.request);if(!target){l.u.unresolved.push({kind:'esm',request:l.request});continue}if(l.kind==='star')this.copyObject(this.constant(target.exports),l.slot);else if(l.kind==='dynamic'||l.key==null)this.seed(l.slot,target.exports);else this.copy(this.property(target.exports,l.key),l.slot)}
+  for(const l of this.links){const target=this.resolvePath(l.u,l.request);if(!target){l.u.unresolved.push({kind:'esm',request:l.request});continue}const namespace=target.esm?this.constant(target.exports):this.property(target.cjs,'exports');if(l.kind==='star')this.rule({op:'export-star',a:namespace,b:l.slot},[namespace,l.slot]);else if(l.kind==='dynamic'&&!target.esm){const value=this.constant(this.object('dynamic-cjs:'+target.id));this.copyObject(namespace,value);this.copy(namespace,this.property('dynamic-cjs:'+target.id,'default'));this.copy(value,l.slot)}else if(l.kind==='dynamic'||l.kind==='namespace'||l.key==null||l.key==='default'&&!target.esm)this.copy(namespace,l.slot);else this.read(namespace,l.key,l.slot)}
   // Built-ins may be assigned to minified variables, then called through aliases.
   this.seed(this.property('builtin:Object','defineProperty'),'builtin:defineProperty');
   this.seed(this.property('builtin:Object','assign'),'builtin:assign');
@@ -127,9 +141,16 @@ export class Analyzer {
    const i=this.queue[q];this.queued.delete(i);const r=this.rules[i];if(++this.stats.events>this.eventLimit)throw Error('Static analysis event budget exhausted; no partial result is reported');
    const vals=s=>this.values[s]||new Set(),copy=(a,b)=>{this.watch[a].add(i);for(const t of vals(a))this.add(b,t)},read=(t,k,b)=>copy(this.property(t,k),b);
    if(r.op==='copy')copy(r.a,r.b);
+   else if(r.op==='fulfilled'){
+    const todo=[r.a],seen=new Set();while(todo.length){const slot=todo.pop();if(seen.has(slot))continue;seen.add(slot);this.watch[slot].add(i);for(const t of vals(slot)){const p=this.tokens.get(t);if(p?.type==='promise')todo.push(p.value);else this.add(r.b,t)}}
+   }
+   else if(r.op==='export-star'){
+    for(const obj of vals(r.a)){let w=this.objectWatch.get(obj);if(!w)this.objectWatch.set(obj,w=new Set());w.add(i);for(const [k,s]of this.objects.get(obj)||[])if(k!=='default'&&(!r.excludeInterop||k!=='__esModule')){this.watch[s].add(i);for(const target of vals(r.b))copy(s,this.property(target,k))}}
+   }
    else if(r.op==='read')for(const t of vals(r.a)){
     if(t==='TOP'){this.add(r.b,'TOP');continue}
-    if(t.startsWith('require:'))this.add(r.b,'runtimeMethod:'+r.k+':'+t.slice(8));
+    if(this.tokens.get(t)?.type==='promise'&&['then','catch','finally'].includes(r.k)){const method='promise-method:'+r.k+':'+t;this.tokens.set(method,{type:'promise-method',method:r.k,promise:t});this.add(r.b,method)}
+    else if(t.startsWith('require:'))this.add(r.b,'runtimeMethod:'+r.k+':'+t.slice(8));
     else if(t.startsWith('context:')){const ctx=this.tokens.get(t);if(r.k==='e'){for(const v of vals(ctx.out))this.add(r.b,v);this.watch[ctx.out].add(i)}else if(r.k==='m')this.add(r.b,ctx.module);else this.add(r.b,'contextMethod:'+r.k+':'+t)}
     else if(t==='builtin:Object'&&r.k==='defineProperty')this.add(r.b,'builtin:defineProperty');
     else{if(t.startsWith('builtin:')&&!['builtin:defineProperty','builtin:assign'].includes(t)){if(r.k==='prototype'){this.add(r.b,'builtin:Object.prototype')}else if(!(t==='builtin:Object'&&['defineProperty','assign'].includes(r.k)))this.add(r.b,'nativeCallable:'+t+':'+r.k)}read(t,r.k,r.b)};
@@ -143,8 +164,14 @@ export class Analyzer {
     for(const t of vals(r.a)){
      if(t==='TOP'){this.add(r.b,'TOP');continue}
      const f=this.tokens.get(t),arg=(j)=>r.args[j];
-     if(t.startsWith('require:')){const [kind,...ns]=t.slice(8).split(':');if(r.literals[0]!=null)this.moduleRead(kind,ns.join(':'),r.literals[0],r.b,i)}
-     else if(t.startsWith('sourceRequire:')){const u=this.unitById.get(r.unit),target=this.resolvePath(u,r.literals[0]);if(target)read(target.cjs,'exports',r.b)}
+     if(f?.type==='promise-method'){
+      const input=this.tokens.get(f.promise).value,output=this.promise('chain:'+r.unit+':'+r.span[0]),value=this.tokens.get(output).value;this.add(r.b,output);
+      if(f.method==='then'&&arg(0)!=null){for(const callback of vals(arg(0))){const fn=this.tokens.get(callback);if(fn?.type!=='function')continue;this.ruleOnce(r,'then-parameter:'+t+':'+callback,()=>{if(fn.params[0]!=null)this.rule({op:'fulfilled',a:input,b:fn.params[0]},[input]);this.rule({op:'fulfilled',a:fn.ret,b:value},[fn.ret])})}}
+      else this.ruleOnce(r,'then-pass:'+t,()=>this.rule({op:'fulfilled',a:input,b:value},[input]));
+     }
+     else if(f?.type==='parcel-require'){const id=this.parcelRequest(t,r.literals[0]);if(id!=null)this.moduleRead('parcel',f.namespace,id,r.b,i)}
+     else if(t.startsWith('require:')){const [kind,...ns]=t.slice(8).split(':');if(r.literals[0]!=null)this.moduleRead(kind,ns.join(':'),r.literals[0],r.b,i)}
+     else if(t.startsWith('sourceRequire:')){const u=this.unitById.get(r.unit),target=this.resolvePath(u,r.literals[0],'require');if(target)read(target.cjs,'exports',r.b)}
      else if(t.startsWith('thunk:'))copy(this.tokens.get(t).out,r.b);
      else if(t.startsWith('defaultGetter:'))copy(this.tokens.get(t).out,r.b);
      else if(t.startsWith('contextMethod:')){
@@ -166,8 +193,12 @@ export class Analyzer {
      else if(t==='builtin:defineProperty'&&arg(0)!=null&&r.literals[1]!=null&&arg(2)!=null)for(const obj of vals(arg(2)))for(const target of vals(arg(0))){read(obj,'value',this.property(target,r.literals[1]));const gs=this.property(obj,'get');this.watch[gs].add(i);for(const g of vals(gs)){const gf=this.tokens.get(g);if(gf?.ret!=null)copy(gf.ret,this.property(target,r.literals[1]))}}
      else if(t==='builtin:assign'&&arg(0)!=null){copy(arg(0),r.b);for(const a of r.args.slice(1))this.ruleOnce(r,'assign:'+a,()=>this.copyObject(a,arg(0)))}
      else if(f?.summary==='commonjs-helper'&&arg(0)!=null){const tok='thunk:'+r.unit+':'+r.span[0];if(!this.tokens.has(tok)){const mt=this.object('cm:'+tok),et=this.object('ce:'+tok),out=this.property(mt,'exports');this.seed(out,et);this.tokens.set(tok,{out});this.rule({op:'factory',a:arg(0),mt,et},[arg(0)])}this.add(r.b,tok)}
+     else if(f?.summary==='preload-import'&&arg(0)!=null){for(const callback of vals(arg(0))){const fn=this.tokens.get(callback);if(fn?.type==='function')copy(fn.ret,r.b)}}
      else if(f?.summary==='esm-helper'){} // Its lexical body is already analyzed; initialization membership adds no edge.
      else if(f?.summary==='export-one'&&arg(0)!=null&&r.literals[1]!=null&&arg(2)!=null)for(const target of vals(arg(0)))for(const g of vals(arg(2))){const gf=this.tokens.get(g);if(gf?.ret!=null)copy(gf.ret,this.property(target,r.literals[1]))}
+     else if(f?.summary==='export-all'){
+      const sh=f.exportAll,a=arg(sh.sourceIndex),b=arg(sh.destIndex);this.watch[sh.guard].add(i);if(a!=null&&b!=null&&vals(sh.guard).has('builtin:defineProperty')){copy(b,r.b);this.ruleOnce(r,'export-all',()=>this.rule({op:'export-star',a,b,excludeInterop:true},[a,b]));}
+     }
      else if(f?.summary==='export-map'){
       const sh=f.exportMap,map=arg(sh.mapIndex);this.watch[sh.guard].add(i);if(map==null||!vals(sh.guard).has('builtin:defineProperty'))continue;
       if(sh.destIndex<0&&r.exportDest==null)r.exportDest=this.constant(this.object('em:'+r.unit+':'+r.span[0]));const dest=sh.destIndex>=0?arg(sh.destIndex):r.exportDest;if(dest==null)continue;this.watch[dest].add(i);

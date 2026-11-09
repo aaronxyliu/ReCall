@@ -26,9 +26,9 @@ Real-world websites commonly serve **bundled and minified JavaScript**, which ob
 
 [![ReCall connects minified website JavaScript to its library name, version, bundling strategy, and original function implementation](docs/assets/recovery-overview-polished.png)](docs/assets/recovery-overview-polished.png)
 
-ReCall combines **POG anchors**, **module-aware relationship graphs**, and **LLM validation**. Supply captured JavaScript and either local reference packages or a fingerprint catalog. **Source maps are not required.**
+ReCall combines **POG anchors**, **module-aware relationship graphs**, **AST matching**, and **LLM validation**. Supply captured JavaScript and either local reference packages or a fingerprint catalog. **Source maps are not required.**
 
-- **Anchor-guided recovery.** Start from fingerprint matches and expand through corresponding source and bundle neighborhoods.
+- **Anchor-guided recovery.** Start from fingerprint matches and expand through corresponding source and bundle neighborhoods. Check AST matches before embedding; on a miss, rank candidates and validate the top three in order.
 - **Bundler-aware analysis.** Resolve mechanisms used by webpack, Rspack, esbuild, Rollup, Rolldown, Turbopack, and Parcel.
 - **Configurable inference.** Choose ranking and validation models, candidate limits, graph settings, and budgets.
 - **Inspectable runs.** Save intermediate artifacts, inspect decisions, and resume compatible checkpoints.
@@ -233,19 +233,47 @@ for (const match of functions) {
 }
 ```
 
-Locations use `[start, end)` offsets in the exact saved JavaScript text. The mapping records whether a function was identified through a POG anchor or model validation, so downstream analysis can retain that evidence.
+Locations use `[start, end)` offsets in the exact saved JavaScript text. The mapping records whether a function was identified through a POG anchor, AST matching, or model validation, so downstream analysis can retain that evidence.
 
 `summary.json` reports recovered counts, unresolved categories, candidate-validation checks, and elapsed time. **Coverage** uses all parsed input functions as its denominator, including application code; it is different from per-library recovery measured against ground truth. Parse failures are reported separately, and accuracy requires independent ground truth. `--prepare-only` produces static artifacts and `status.json`, with the final mapping and summary written during recovery.
 
 ## How it works
 
-[![ReCall workflow: anchor pair, paired neighborhoods, top-five ranking, LLM validation, and new-anchor feedback](docs/assets/pipeline-workflow-b-prime.png)](docs/assets/pipeline-workflow-b-prime.png)
-
 POG (property-operation graph) fingerprints provide initial source-to-bundle matches. ReCall builds relationship graphs on **both the source and bundle sides**, enriching them with resolved module relationships when enabled.
 
-A known match between a source function **s** and bundled function **b** provides the starting anchor. ReCall finds an unmatched neighbor **b′**, collects source candidates from the corresponding neighborhoods, and ranks them by embedding similarity. The **top five** are validated in order; the first positive proposal can become a new anchor after conflict checks at round end.
+A known match between a source function **s** and bundled function **b** provides the starting anchor. ReCall finds an unmatched neighbor **b′** and collects source candidates from the corresponding neighborhoods. The current workflow processes that candidate pool as follows:
 
-Solid graph arrows represent calls or function references, including resolved imports; dashed edges represent scope or proximity. Search traverses these relationships in both directions and combines candidate pools from nearby anchors. The figure illustrates the process rather than experimental scores. [Open full-size figure](docs/assets/pipeline-workflow-b-prime.png) · [Editable SVG](docs/assets/pipeline-workflow.svg)
+1. **Check AST matches before embedding or ranking.** Visit candidates in their existing pool order and stop at the first AST match. Accept that match immediately and use it as an anchor, including for later targets in the same pass. This path makes no embedding or LLM-validation request and is not restricted to three candidates.
+2. **On an AST miss, embed and rank.** If no candidate matches, rank the neighborhood candidates by embedding cosine similarity and retain the **top three**. No similarity cutoff is applied.
+3. **Validate in rank order.** Check those candidates one at a time and stop at the first accepted result. Model-accepted proposals pass through the configured conflict policy at round end; accepted matches become anchors for further recovery. If all three fail, the target remains unresolved for that candidate pool.
+
+```mermaid
+flowchart TD
+    Anchors["POG anchors + source/bundle graphs"] --> Pool["Collect neighborhood candidates"]
+    Pool --> AST{"First AST match in candidate pool?"}
+    AST -->|Yes| Immediate["Accept immediately as a new anchor"]
+    AST -->|No| Rank["Embed and rank candidates; retain top 3"]
+    Rank --> Validate["Validate in rank order; stop at first acceptance"]
+    Validate --> Promote["Apply configured round-end conflict policy"]
+    Immediate --> Pool
+    Promote -->|New anchors| Pool
+```
+
+This workflow is enabled by default. Its settings can also be stated explicitly in the JSON file passed through `--config`:
+
+```json
+{
+  "recovery": {
+    "astBeforeRanking": true,
+    "topK": 3,
+    "minSimilarity": -1
+  }
+}
+```
+
+To disable the pre-ranking AST search, set `recovery.astBeforeRanking: false`; use `recovery.topK` to change the ranked candidate limit. `models.astFirst` controls a separate AST check inside candidate validation and does not replace the pre-ranking search. AST matching uses normalized syntax, including consistent identifier renaming; it is a heuristic match rather than a proof of source identity. See the [configuration reference](docs/configuration.md).
+
+Graph relationships include calls and function references, including resolved imports, as well as scope and proximity. Search traverses these relationships in both directions and combines candidate pools from nearby anchors.
 
 <details>
 <summary><strong>Bundler mechanisms and scope</strong></summary>

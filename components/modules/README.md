@@ -56,3 +56,23 @@ const moduleMap = resolveModules(inventory, {bundler: identification, followDepe
 See [graph builder](../graph/README.md) to use or omit this result, and [engine boundary](../../src/engine/README.md) for implementation organization.
 
 `moduleGraph` now carries `recall.module-ir/v1` with resolved exports and ESM bindings alongside modules and dependencies. See [adapter contract](../../docs/adapters.md) and [canonical configuration](../../docs/configuration.md).
+
+## Import namespace and cached-export flow
+
+Literal dynamic imports retain a modeled promise rather than treating the promise itself as a module namespace. Fulfilled namespaces flow through `await`, `.then()` callbacks (including destructured parameters), and fulfilled `.catch()`/`.finally()` pass-through. This model is limited to import-derived promises; it does not simulate arbitrary promises or rejection control flow. Dynamic CommonJS imports provide their named exports and default namespace.
+
+Vite's preload helper is recognized through the preload-error protocol, Promise dependency aggregation, and invocation of its loader parameter. The analysis follows that supplied loader's returned import promise. CSS preloads and dependency arrays do not add fetched files or guessed chunk URLs. Destructured Turbopack context parameters preserve loader/export roles and ESM namespace semantics across chunks. Zero-argument cached CommonJS wrappers can expose a returned outer namespace when a captured initialization guard is set and all their own returns identify the same captured value. Local or parameter-dependent return values are not generalized into arbitrary argument/return propagation.
+
+These summaries add function relationships where output code preserves enough value-flow evidence. They do not create module containers for flattened code or introduce relationships merely because functions belong to the same library. Recognition and the resulting function edges survive serialized module-plan replay.
+
+## Parcel factory tables
+
+Parcel table runtimes store `[factory, dependencyMap]` entries and call factories with `(localRequire, module, exports)`. Registration runtimes instead pass `(module, exports)`. Both forms are recognized structurally; the table form requires the loader invocation shape and Parcel runtime marker. Module-local request aliases remain scoped to their own dependency map and registry. Missing targets remain explicit, and disabled imports do not create function targets.
+
+The serialized recognition plan retains factory parameter roles and dependency maps. The solver also models three-parameter export getters, namespace wrapping for CommonJS defaults, and getter-based `exportAll` forwarding. Independent registries and global hosts stay separate. These mechanisms are tested through JSON plan replay.
+
+## Counting module-crossing relationships
+
+Runtime factory boundaries and chunk/file boundaries identify only part of the inter-module relationships in flattened output. The function graph can already contain direct calls and references between original modules even when no emitted module container survives. A zero runtime-boundary count therefore does not imply that the graph contains no original inter-module relationships.
+
+For evaluation, original source-file crossings can be labeled after graph construction from saved source maps. Keep those labels outside inference. Report the graph's code-visible crossings separately from post-hoc original-file crossings, and disclose the source-label coverage and unresolved cases. These counts overlap and must not be summed.

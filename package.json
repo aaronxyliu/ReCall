@@ -10,11 +10,14 @@
     "prepare:example": "node bin/recall.mjs recover examples/minimal/bundle --references examples/minimal/source --config examples/minimal/config.json --prepare-only --out outputs/minimal-prepared"
   },
   "dependencies": {
-    "meriyah": "6.0.6",
-    "terser": "5.43.1",
+    "@streamparser/json": "0.0.26",
+    "@sveltejs/acorn-typescript": "1.0.13",
     "acorn": "8.19.0",
     "eslint-scope": "5.1.1",
-    "rapidhash-js": "file:third_party/rapidhash-js"
+    "meriyah": "6.0.6",
+    "rapidhash-js": "file:third_party/rapidhash-js",
+    "svelte": "5.57.3",
+    "terser": "5.43.1"
   },
   "description": "Composable library function recovery for bundled JavaScript",
   "bin": {

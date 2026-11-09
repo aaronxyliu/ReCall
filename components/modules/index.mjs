@@ -29,7 +29,8 @@ export function resolveModules(inventory,{bundler=null,followDependencies=true,v
  // Preserve all explicit units, even when two files have identical bytes.
  const paths=new Set(explicit.map(u=>u.environment+'|'+u.path));
  const extras=context.units.filter(u=>!paths.has(u.environment+'|'+u.path)).map(u=>({...u,functions:[],contextOnly:true}));
- const units=[...explicit,...extras];
+ const contextById=new Map(context.units.map(u=>[u.id,u]));
+ const units=[...explicit.map(u=>{const c=contextById.get(u.id);return {...u,...(c?.packageRoot?{packageRoot:c.packageRoot}:{}),...(c?.packageInfo?{packageInfo:c.packageInfo}:{}),...(c?.aliasPaths?.length?{aliasPaths:c.aliasPaths}:{})}}),...extras];
  if(units.length>maxFiles||units.reduce((n,u)=>n+Buffer.byteLength(u.code),0)>maxBytes)throw Error('Resolved inputs exceed maxFiles/maxBytes; increase the explicit resource limits');
  const a=new Analyzer({valueLimit,eventLimit});
  for(const u of units)a.addUnit(u);

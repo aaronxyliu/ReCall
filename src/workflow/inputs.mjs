@@ -25,7 +25,7 @@ export function referenceManifest(directory,limits={}) {
   if(fs.existsSync(path.join(dir,'package.json'))){const p=readJSON(path.join(dir,'package.json'));if(!p.name||!p.version)throw Error('Reference package requires name and version: '+dir);packages.push({dir,library:{name:p.name,version:p.version}});return}
   for(const e of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name)))if(e.isDirectory()&&!e.name.startsWith('.')&&e.name!=='node_modules')visit(path.join(dir,e.name));
  }visit(root);if(!packages.length)throw Error('No versioned reference packages found in '+root);
- return {roots:packages.map(p=>p.dir),files:packages.flatMap(p=>discoverJavaScript(p.dir,limits).files.map(f=>({...f,id:JSON.stringify([p.library.name,p.library.version,f.id]),library:p.library})))};
+ return {roots:packages.map(p=>p.dir),files:packages.flatMap(p=>discoverJavaScript(p.dir,limits).files.map(f=>({...f,id:JSON.stringify([p.library.name,p.library.version,f.id]),packageRoot:p.dir,library:p.library})))};
 }
 export function buildCatalog(inventory) {
  checkInventory(inventory);

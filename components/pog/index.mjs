@@ -2,7 +2,7 @@ import {createProject,projectNodes} from '../../src/project.mjs';
 import {measure} from '../../src/analysis/measure.mjs';
 import {inventoryDigest,checkInventory,integer,groups} from '../../src/shared/artifacts.mjs';
 
-export const defaults={minFeatures:10,featureMetric:'propertyOperations',minAnchors:3,uniqueBundle:true};
+export const defaults={minFeatures:10,featureMetric:'propertyOperations',minAnchors:3,uniqueBundle:false};
 export function featureOptions(options={}){
  const o={...defaults,...options};integer(o.minFeatures,'minFeatures',{min:1});integer(o.minAnchors,'minAnchors',{min:1});
  if(!['propertyOperations','graphNodes'].includes(o.featureMetric))throw Error('featureMetric must be propertyOperations or graphNodes');
@@ -21,10 +21,11 @@ export function extractFeatures(manifest,options={}){return addFeatures(createPr
 function eligible(inventory,o){return inventory.functions.filter(f=>f.pogHash&&Number(f[o.featureMetric])>=o.minFeatures)}
 export function identifyAnchors(source,bundle,options={}){
  checkInventory(source);checkInventory(bundle);const o=featureOptions(options),sg=groups(eligible(source,o),f=>f.pogHash),matches=[],ambiguous=[];
- // Uniqueness and source allocation are scoped to each target chunk.
+ // A unique reference fingerprint can identify every bundled copy, including
+ // repeated copies within one chunk. POG equality is sufficient for anchors.
  for(const [unit,fs]of groups(eligible(bundle,o),f=>f.unit))for(const [fingerprint,bs]of groups(fs,f=>f.pogHash)){
   const ss=sg.get(fingerprint)||[];
-  if(ss.length===1&&bs.length===1)matches.push({sourceId:ss[0].id,bundleId:bs[0].id,unit,kind:'pog-anchor',fingerprint});
+  if(ss.length===1)for(const b of bs)matches.push({sourceId:ss[0].id,bundleId:b.id,unit,kind:'pog-anchor',fingerprint});
   else if(ss.length)ambiguous.push({fingerprint,unit,sourceCandidates:ss.length,bundleCandidates:bs.length});
  }
  return {schema:'recall.anchors/v1',sourceDigest:source.inputDigest,bundleDigest:bundle.inputDigest,options:o,matches,ambiguous};

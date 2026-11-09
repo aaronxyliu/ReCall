@@ -18,7 +18,9 @@ context.registrations.push({
 });
 ```
 
-Loaders use `{namespace,requireNode,mechanism}`; Parcel loaders use `{namespace,node}`. The analyzer serializes AST identities as exact source spans for independent replay. `validateRecognition()` rejects malformed output. New syntax for an existing protocol can reuse its semantics. A genuinely new loader/export protocol also needs value-flow semantics in the shared engine; the adapter interface does not magically model arbitrary JavaScript runtimes.
+Loaders use `{namespace,requireNode,mechanism}`; Parcel loaders use `{namespace,node}`. Parcel tuple-table registrations additionally carry `parameterRoles: "require-module-exports"` and a per-module `dependencies` map; ordinary Parcel registrations retain `(module, exports)` roles. The analyzer serializes AST identities as exact source spans for independent replay. `validateRecognition()` rejects malformed output. New syntax for an existing protocol can reuse its semantics. A genuinely new loader/export protocol also needs value-flow semantics in the shared engine; the adapter interface does not magically model arbitrary JavaScript runtimes.
+
+Import-derived promise flow, the Vite preload protocol, and captured namespace returns are modeled in the shared analyzer/helper layer. Keep these semantics independent of family hints; only supplied files contribute matchable targets.
 
 Shared lazy-CJS and export/getter helper summaries live in `adapters/helpers.mjs`. They are intentionally shared across bundler brands with equivalent emitted mechanisms. They run against the common solver rather than emitting fictional module registrations for every flattened helper.
 
