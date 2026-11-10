@@ -1,3 +1,4 @@
+import {sourceScopes} from '../../src/analysis/library-scope.mjs';
 import {createProject,projectNodes} from '../../src/project.mjs';
 import {measure} from '../../src/analysis/measure.mjs';
 import {inventoryDigest,checkInventory,integer,groups} from '../../src/shared/artifacts.mjs';
@@ -20,28 +21,30 @@ export function addFeatures(project){
 export function extractFeatures(manifest,options={}){return addFeatures(createProject(manifest,options))}
 function eligible(inventory,o){return inventory.functions.filter(f=>f.pogHash&&Number(f[o.featureMetric])>=o.minFeatures)}
 export function identifyAnchors(source,bundle,options={}){
- checkInventory(source);checkInventory(bundle);const o=featureOptions(options),sg=groups(eligible(source,o),f=>f.pogHash),matches=[],ambiguous=[];
+ checkInventory(source);checkInventory(bundle);const o=featureOptions(options),scopes=sourceScopes(source),matches=[],ambiguous=[];
  // A unique reference fingerprint can identify every bundled copy, including
  // repeated copies within one chunk. POG equality is sufficient for anchors.
+ for(const [libraryScope,functions]of scopes){const sg=groups(functions.filter(f=>f.pogHash&&Number(f[o.featureMetric])>=o.minFeatures),f=>f.pogHash);
  for(const [unit,fs]of groups(eligible(bundle,o),f=>f.unit))for(const [fingerprint,bs]of groups(fs,f=>f.pogHash)){
   const ss=sg.get(fingerprint)||[];
-  if(ss.length===1)for(const b of bs)matches.push({sourceId:ss[0].id,bundleId:b.id,unit,kind:'pog-anchor',fingerprint});
-  else if(ss.length)ambiguous.push({fingerprint,unit,sourceCandidates:ss.length,bundleCandidates:bs.length});
+  if(ss.length===1)for(const b of bs)matches.push({sourceId:ss[0].id,bundleId:b.id,unit,libraryScope,kind:'pog-anchor',fingerprint});
+  else if(ss.length)ambiguous.push({fingerprint,unit,libraryScope,sourceCandidates:ss.length,bundleCandidates:bs.length});
+ }
  }
  return {schema:'recall.anchors/v1',sourceDigest:source.inputDigest,bundleDigest:bundle.inputDigest,options:o,matches,ambiguous};
 }
 export function identifyLibraries(source,bundle,options={}){
  checkInventory(source);checkInventory(bundle);const o=featureOptions(options),bs=groups(eligible(bundle,o),f=>f.pogHash),libraries=[];
- const refs=groups(source.functions.filter(f=>f.library),f=>JSON.stringify(f.library));
+ const refs=sourceScopes(source);
  for(const [key,fs]of refs){
-  const library=JSON.parse(key),evidence=[];
+  const library=fs[0]?.library;if(!library)continue;const evidence=[];
   for(const [fingerprint,ss]of groups(fs.filter(f=>f.pogHash&&Number(f[o.featureMetric])>=o.minFeatures),f=>f.pogHash)){
    const targets=bs.get(fingerprint)||[];
    // Count distinct reference functions/signatures, never duplicate bundled copies.
    if(ss.length===1&&targets.length&&(!o.uniqueBundle||[...groups(targets,f=>f.unit).values()].some(xs=>xs.length===1)))
     evidence.push({sourceId:ss[0].id,fingerprint,bundleIds:targets.map(f=>f.id)});
   }
-  libraries.push({library,matchedAnchorFunctions:evidence.length,detected:evidence.length>=o.minAnchors,evidence});
+  libraries.push({library,libraryScope:key,matchedAnchorFunctions:evidence.length,detected:evidence.length>=o.minAnchors,evidence});
  }
  return {schema:'recall.libraries/v1',sourceDigest:source.inputDigest,bundleDigest:bundle.inputDigest,options:o,libraries,diagnostics:source.functions.some(f=>f.library)?[]:[{kind:'missing-reference-library-metadata'}],policy:'Configurable anchor-count identification heuristic, not a complete reproduction of DEBUN library/version scoring. All passing versions are retained as candidates.'};
 }

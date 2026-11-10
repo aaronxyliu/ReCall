@@ -35,7 +35,7 @@ test('library identification honors required distinct anchor count and preserves
  const libs=identifyLibraries(source,repeated,{minAnchors:2});assert.equal(libs.libraries[0].matchedAnchorFunctions,1);assert.equal(libs.libraries[0].detected,false);
  const versions=extractFeatures({files:[...source.units,...source.units.map(u=>({...u,id:u.id+'v2',library:{...u.library,version:'2.0.0'}}))]});
  assert.equal(identifyLibraries(versions,bundle,{minAnchors:1}).libraries.filter(x=>x.detected).length,2);
- assert.equal(identifyAnchors(versions,bundle).matches.length,0);
+ assert.equal(identifyAnchors(versions,bundle).matches.length,2);
 });
 test('unparseable inputs remain diagnosed rather than fabricating features',()=>{
  const i=extractFeatures({files:[{path:'bad.js',code:'function {'}]});assert.equal(i.functions.length,0);assert.equal(i.diagnostics[0].kind,'parse-error');
@@ -164,14 +164,14 @@ for(const [family,code]of Object.entries(protocols))test(family+' module plans p
  const caller=i.functions.find(f=>f.name==='caller'),target=i.functions.find(f=>f.name==='target');
  assert(g.edges.some(e=>e.from===caller.id&&e.to===target.id&&e.kind==='call'));
 });
-test('cross-chunk propagation is opt-in while per-chunk source identities are reusable',async()=>{
+test('cross-chunk propagation is enabled by default and can be explicitly disabled',async()=>{
  const source=inputs().source,bundle=extractFeatures({files:[
  {id:'helper-chunk',path:'helper-chunk.js',code:'(self.example=[]).push([[0],{0:(m,x,r)=>{x.helper=function h(y){return y.value+1}}}])'},
  {id:'anchor-chunk',path:'anchor-chunk.js',code:'(self.example=[]).push([[1],{1:(m,x,r)=>{const h=r(0).helper;function a(y){y.a;y.b;y.c;y.d;y.e;y.f;y.g;y.h;y.i;y.j;return h(y)}x.anchor=a}}])'}]});
  const helper=source.functions.find(f=>f.name==='helper');
- const local=await runPipeline({source,bundle,config,models:mock()});
+ const local=await runPipeline({source,bundle,config:{...config,recovery:{...config.recovery,crossChunk:false}},models:mock()});
  assert(!local.recovery.promotions.some(p=>p.sourceId===helper.id));
- const enabled=await runPipeline({source,bundle,config:{...config,recovery:{astBeforeRanking:false,minAnchors:1,crossChunk:true}},models:mock()});
+ const enabled=await runPipeline({source,bundle,config:{...config,recovery:{astBeforeRanking:false,minAnchors:1}},models:mock()});
  assert(enabled.recovery.promotions.some(p=>p.sourceId===helper.id&&p.kind==='model-recovered'));
  const repeats=extractFeatures({files:[...bundle.units,...bundle.units.map(u=>({...u,id:u.id+'-copy',environment:'copy'}))]});
  assert.equal(identifyAnchors(source,repeats).matches.length,2);

@@ -1,6 +1,6 @@
+import {libraryScope} from '../../src/analysis/library-scope.mjs';
 import {analyze} from '../../src/analysis/lexical.mjs';
-import {Analyzer} from '../../src/engine/analyzer.mjs';
-import {checkModuleMap,solvedRelationships} from '../modules/index.mjs';
+import {checkModuleMap,solvedRelationships,solveUnits} from '../modules/index.mjs';
 import {checkInventory,integer,hash,artifact,sameInput,groups} from '../../src/shared/artifacts.mjs';
 
 export const graphDigest=g=>hash({input:g.inputDigest,functions:g.functions,edges:g.edges,options:g.options,modulePlan:g.modulePlanDigest});
@@ -12,13 +12,14 @@ export function checkGraph(g,inventory){
  for(const e of g.edges)if(!ids.has(e.from)||!ids.has(e.to))throw Error('Graph edge references an unknown function');
  return g;
 }
-export function buildGraph(inventory,{moduleMap=null,siblingWindow=2,includeContainment=true}={}){
- checkInventory(inventory);integer(siblingWindow,'siblingWindow');if(typeof includeContainment!=='boolean')throw Error('includeContainment must be Boolean');
+export function buildGraph(inventory,{moduleMap=null,siblingWindow=2,includeContainment=true,isolateLibraries=inventory.units.some(u=>u.library)}={}){
+ checkInventory(inventory);if(typeof isolateLibraries!=='boolean')throw Error('isolateLibraries must be Boolean');integer(siblingWindow,'siblingWindow');if(typeof includeContainment!=='boolean')throw Error('includeContainment must be Boolean');
+ const scopeByUnit=new Map(inventory.units.map(u=>[u.id,libraryScope(u)])),scopeByFunction=new Map(inventory.functions.map(f=>[f.id,scopeByUnit.get(f.unit)]));
  const edges=[],seen=new Set(),diagnostics=[];
- const add=e=>{if(e.from===e.to)return;const k=JSON.stringify([e.from,e.to,e.kind]);if(!seen.has(k)){seen.add(k);edges.push(e)}};
+ const add=e=>{if(e.from===e.to||isolateLibraries&&scopeByFunction.get(e.from)!==scopeByFunction.get(e.to))return;const k=JSON.stringify([e.from,e.to,e.kind]);if(!seen.has(k)){seen.add(k);edges.push(e)}};
  if(moduleMap){
   checkModuleMap(moduleMap,inventory);let result=solvedRelationships(moduleMap);
-  if(!result){const a=new Analyzer({...moduleMap.options,modulePlans:moduleMap.plans});for(const u of moduleMap.units)a.addUnit(u);result=a.solve()}
+  if(!result)result=solveUnits(moduleMap.units,{...moduleMap.options,modulePlans:moduleMap.plans}).solved;
  result.edges.forEach(add);diagnostics.push(...moduleMap.diagnostics,...result.errors,...result.diagnostics);
  }else {const byUnit=groups(inventory.functions,f=>f.unit);for(const u of inventory.units){
   try{
@@ -32,6 +33,6 @@ export function buildGraph(inventory,{moduleMap=null,siblingWindow=2,includeCont
   fs.sort((a,b)=>a.span[0]-b.span[0]);
   for(let i=0;i<fs.length;i++)for(let d=1;d<=siblingWindow&&i+d<fs.length;d++)add({from:fs[i].id,to:fs[i+d].id,kind:'sibling'});
  }
- const result={schema:'recall.graph/v1',inputDigest:inventory.inputDigest,functions:inventory.functions.map(({id,unit,span})=>({id,unit,span})),edges,options:{mode:moduleMap?'module-aware':'local',siblingWindow,includeContainment},modulePlanDigest:moduleMap?.planDigest||null,diagnostics,policy:'Undirected neighborhood search consumes calls, references, containment, and proximity. Edges are candidates, not identity judgments or a precise call graph.'};
+ const result={schema:'recall.graph/v1',inputDigest:inventory.inputDigest,functions:inventory.functions.map(({id,unit,span})=>({id,unit,span})),edges,options:{mode:moduleMap?'module-aware':'local',siblingWindow,includeContainment,isolateLibraries},modulePlanDigest:moduleMap?.planDigest||null,diagnostics,policy:'Undirected neighborhood search consumes calls, references, containment, and proximity. Edges are candidates, not identity judgments or a precise call graph.'};
  result.graphDigest=graphDigest(result);return result;
 }

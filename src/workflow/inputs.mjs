@@ -1,3 +1,4 @@
+import {sourceScopes} from '../analysis/library-scope.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -6,32 +7,32 @@ import {extractFeatures,featureOptions} from '../../components/pog/index.mjs';
 import {hash,readJSON,writeJSON,groups,checkInventory} from '../shared/artifacts.mjs';
 
 // Deterministic discovery never follows symlinks or reads dependency installations.
-export function discoverJavaScript(directory,{maxFiles=20000,maxBytes=1073741824}={}) {
+export function discoverJavaScript(directory,{maxFiles=20000,maxBytes=1073741824,includeTypeScript=false}={}) {
  const root=fs.realpathSync(directory),files=[];let bytes=0;
  function visit(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){
   if(e.name.startsWith('.')||e.name==='node_modules')continue;
   const file=path.join(dir,e.name);
-  if(e.isDirectory())visit(file);
-  else if(e.isFile()&&/\.(?:js|mjs|cjs)$/i.test(e.name)){
+  if(e.isDirectory()){const descriptor=path.join(file,'package.json');if(includeTypeScript&&fs.existsSync(descriptor)&&readJSON(descriptor).name)continue;visit(file);}
+  else if(e.isFile()&&(/\.(?:js|mjs|cjs)$/i.test(e.name)||includeTypeScript&&/\.(?:ts|mts|cts|tsx|jsx)$/i.test(e.name)&&! /\.d\.(?:ts|mts|cts)$/i.test(e.name))){
    bytes+=fs.statSync(file).size;files.push({id:'file:'+path.relative(root,file).split(path.sep).join('/'),path:file});
    if(files.length>maxFiles||bytes>maxBytes)throw Error('Input discovery exceeds maxFiles/maxBytes');
   }
- }}visit(root);if(!files.length)throw Error('No .js, .mjs, or .cjs files found in '+root);
+ }}visit(root);if(!files.length)throw Error((includeTypeScript?'No JavaScript or TypeScript implementation files found in ':'No .js, .mjs, or .cjs files found in ')+root);
  return {roots:[root],files};
 }
 export function referenceManifest(directory,limits={}) {
  const root=fs.realpathSync(directory),packages=[];
  function visit(dir){
-  if(fs.existsSync(path.join(dir,'package.json'))){const p=readJSON(path.join(dir,'package.json'));if(!p.name||!p.version)throw Error('Reference package requires name and version: '+dir);packages.push({dir,library:{name:p.name,version:p.version}});return}
+  if(fs.existsSync(path.join(dir,'package.json'))){const p=readJSON(path.join(dir,'package.json'));if(!p.name||!p.version)throw Error('Reference package requires name and version: '+dir);packages.push({dir,library:{name:p.name,version:p.version},packageInfo:Object.fromEntries(['name','version','main','module','exports','imports'].filter(k=>Object.hasOwn(p,k)).map(k=>[k,p[k]]))});return}
   for(const e of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name)))if(e.isDirectory()&&!e.name.startsWith('.')&&e.name!=='node_modules')visit(path.join(dir,e.name));
  }visit(root);if(!packages.length)throw Error('No versioned reference packages found in '+root);
- return {roots:packages.map(p=>p.dir),files:packages.flatMap(p=>discoverJavaScript(p.dir,limits).files.map(f=>({...f,id:JSON.stringify([p.library.name,p.library.version,f.id]),packageRoot:p.dir,library:p.library})))};
+ return {roots:packages.map(p=>p.dir),files:packages.flatMap(p=>discoverJavaScript(p.dir,{...limits,includeTypeScript:true}).files.map(f=>({...f,id:JSON.stringify([p.library.name,p.library.version,path.relative(root,p.dir),f.id]),packageRoot:p.dir,packageInfo:p.packageInfo,library:p.library})))};
 }
 export function buildCatalog(inventory) {
  checkInventory(inventory);
- const libraries=[...groups(inventory.functions.filter(f=>f.library),f=>JSON.stringify(f.library))].map(([key,functions])=>{
-  const library=JSON.parse(key),units=inventory.units.filter(u=>JSON.stringify(u.library)===key);
-  return {library,features:functions.filter(f=>f.pogHash).map(f=>({fingerprint:f.pogHash,propertyOperations:f.propertyOperations,graphNodes:f.graphNodes})),localFiles:units.map(u=>({path:u.path,sha256:hash(u.code)}))};
+ const libraries=[...sourceScopes(inventory)].filter(([,fs])=>fs[0]?.library).map(([key,functions])=>{
+  const library=functions[0].library,ids=new Set(functions.map(f=>f.unit)),units=inventory.units.filter(u=>ids.has(u.id));
+  return {library,libraryScope:key,features:functions.filter(f=>f.pogHash).map(f=>({fingerprint:f.pogHash,propertyOperations:f.propertyOperations,graphNodes:f.graphNodes})),localFiles:units.map(u=>({path:u.path,sha256:hash(u.code),...(u.packageRoot?{packageRoot:u.packageRoot}:{}),...(u.packageInfo?{packageInfo:u.packageInfo}:{})}))};
  });
  if(!libraries.length)throw Error('Catalog requires versioned library metadata');
  const catalog={schema:'recall.catalog/v1',libraries};catalog.digest=hash(libraries);return catalog;
@@ -94,7 +95,7 @@ export async function fetchReference(library,{cacheDir,registry='https://registr
  try{
   const source=path.join(temp,'source');fs.mkdirSync(source);extractPackageArchive(archive,source,{maxFiles,maxBytes});
   const pkg=readJSON(path.join(source,'package.json'));if(pkg.name!==library.name||pkg.version!==library.version)throw Error('Archive package/version differs from metadata');
-  const files=discoverJavaScript(source,{maxFiles,maxBytes}).files.map(f=>({path:path.relative(fs.realpathSync(source),f.path),sha256:hash(fs.readFileSync(f.path,'utf8'))}));
+  const files=discoverJavaScript(source,{maxFiles,maxBytes,includeTypeScript:true}).files.map(f=>({path:path.relative(fs.realpathSync(source),f.path),sha256:hash(fs.readFileSync(f.path,'utf8'))}));
   fs.writeFileSync(path.join(temp,'package.tgz'),archive);writeJSON(path.join(temp,'reference.json'),{schema:'recall.npm-reference/v1',library,registry,integrity,files});
   if(fs.existsSync(destination))throw Error('Incomplete reference cache exists; remove it before retrying');fs.renameSync(temp,destination);
  }catch(error){fs.rmSync(temp,{recursive:true,force:true});throw error}
@@ -110,7 +111,7 @@ export async function prepareInputs({captured=null,sourceManifest=null,bundleMan
  for(const entry of detected){
   onProgress({stage:'references',library:entry.library});
   if(entry.localFiles?.length&&entry.localFiles.every(f=>fs.existsSync(f.path)&&hash(fs.readFileSync(f.path,'utf8'))===f.sha256)){
-   files.push(...entry.localFiles.map(f=>({path:f.path,library:entry.library,id:hash([entry.library,f.path])})));roots.push(...entry.localFiles.map(f=>path.dirname(f.path)));
+   files.push(...entry.localFiles.map(f=>({path:f.path,library:entry.library,id:hash([entry.library,f.path]),...(f.packageRoot?{packageRoot:f.packageRoot}:{}),...(f.packageInfo?{packageInfo:f.packageInfo}:{})})));roots.push(...entry.localFiles.map(f=>path.dirname(f.path)));
   }else{
    const directory=await fetchReference(entry.library,inputs),manifest=referenceManifest(directory,inputs);files.push(...manifest.files);roots.push(...manifest.roots);
   }

@@ -31,6 +31,7 @@ export function checkInventory(x){
  for(const f of x.functions){
   if(functions.has(f.id)||!units.has(f.unit)||!Array.isArray(f.span)||typeof f.code!=='string')throw Error('Invalid/duplicate function identity');
   const u=unitMap.get(f.unit);
+  if(hash(f.library||null)!==hash(u.library||null))throw Error('Function library ownership disagrees with its source unit');
   const codeSpan=f.codeSpan||f.span;
   if(!Array.isArray(codeSpan)||codeSpan.length!==2||!codeSpan.every(Number.isInteger)||codeSpan[0]<0||codeSpan[0]>f.span[0]||codeSpan[1]!==f.span[1]||u.code.slice(...codeSpan)!==f.code)throw Error('Function body does not match inventory span');
   functions.add(f.id);

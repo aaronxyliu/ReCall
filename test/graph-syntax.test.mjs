@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
 import {graphPrograms} from '../src/analysis/graph-syntax.mjs';import {collectContext} from '../src/analysis/context.mjs';import {Analyzer} from '../src/engine/analyzer.mjs';
 test('typed graph syntax preserves original function offsets and rejects unsupported runtime transforms',()=>{
- const code='interface Item { value: number }\nexport function read(x: Item): number { return x.value }';const ast=graphPrograms(code,'x.ts')[0].ast;assert.equal(ast.body[0].declaration.range[0],code.indexOf('function'));assert.throws(()=>graphPrograms('enum Mode { A, B }','x.ts'));assert.throws(()=>graphPrograms('export function broken( {','x.js'));
+ const code='interface Item { value: number }\nexport function read(x: Item): number { return x.value }';const ast=graphPrograms(code,'x.ts')[0].ast;assert.equal(ast.body[0].declaration.range[0],code.indexOf('function'));assert.doesNotThrow(()=>graphPrograms('enum Mode { A, B }','x.ts'));assert.throws(()=>graphPrograms('enum Mode { A = getValue() }','x.ts'),/nonconstant enum/);assert.throws(()=>graphPrograms('export function broken( {','x.js'));
 });
 test('component parser finds scripts rather than script-like template comments; scopes remain separate',()=>{
  const code='<!-- <script>invalid</script> --><script context="module">let same=1;</script><script lang="ts">let same:number=2; function f(){return same}</script><p>{same}</p>';

@@ -12,8 +12,8 @@ const prop=n=>n?.computed?literal(n.property):n?.property?.name;
 const field=n=>n?.computed?literal(n.key):n?.key?.name??literal(n.key);
 const children=n=>Object.entries(n).flatMap(([k,v])=>['loc','range'].includes(k)?[]:Array.isArray(v)?v.filter(x=>x?.type):v?.type?[v]:[]);
 export class Analyzer {
- constructor({valueLimit=64,eventLimit=50000000,modulePlans=null}={}){
-  this.modulePlans=modulePlans;this.recordedPlans={};
+ constructor({valueLimit=64,eventLimit=50000000,modulePlans=null,isolateLibraries=false}={}){
+  this.isolateLibraries=isolateLibraries;this.modulePlans=modulePlans;this.recordedPlans={};
   this.limit=valueLimit;this.eventLimit=eventLimit;this.values=[];this.watch=[];this.rules=[];this.queue=[];this.queued=new Set();this.objects=new Map();this.objectWatch=new Map();this.tokens=new Map();this.modules=new Map();this.units=[];this.unitById=new Map();this.paths=new Map();this.links=[];this.calls=[];this.refs=[];this.errors=[];this.diagnostics=[];this.stats={astNodes:0,modules:{webpack:0,rspack:0,turbopack:0,parcel:0,commonjs:0},helpers:{},events:0,overflowSlots:0};
  }
  slot(){let i=this.values.length;this.values.push(new Set());this.watch.push(new Set());return i}
@@ -31,7 +31,7 @@ export class Analyzer {
  promise(key){const token='promise:'+key;if(!this.tokens.has(token))this.tokens.set(token,{type:'promise',value:this.slot()});return token}
  parcelRequest(token,request){const meta=this.tokens.get(token);if(request==null)return null;return Object.hasOwn(meta.dependencies,request)?meta.dependencies[request]:request}
  register(kind,namespace,id,f){const k=kind+':'+namespace+':'+id;let ms=this.modules.get(k);if(!ms)this.modules.set(k,ms=[]);ms.push(f);this.stats.modules[kind]++;return k}
- resolvePath(u,request,kind='import'){this.sourceResolver??=createSourceResolver(this.units);return this.sourceResolver.resolve(u,request,kind)}
+ resolvePath(u,request,kind='import'){this.sourceResolver??=createSourceResolver(this.units,{isolateLibraries:this.isolateLibraries});return this.sourceResolver.resolve(u,request,kind)}
  addUnit(spec){
   if(!spec.graphAst){
    let programs;try{programs=graphPrograms(spec.code,spec.path)}catch(e){this.errors.push({unit:spec.id,error:e.message});return}

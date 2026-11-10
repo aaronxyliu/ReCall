@@ -76,3 +76,34 @@ The serialized recognition plan retains factory parameter roles and dependency m
 Runtime factory boundaries and chunk/file boundaries identify only part of the inter-module relationships in flattened output. The function graph can already contain direct calls and references between original modules even when no emitted module container survives. A zero runtime-boundary count therefore does not imply that the graph contains no original inter-module relationships.
 
 For evaluation, original source-file crossings can be labeled after graph construction from saved source maps. Keep those labels outside inference. Report the graph's code-visible crossings separately from post-hoc original-file crossings, and disclose the source-label coverage and unresolved cases. These counts overlap and must not be summed.
+
+## Independent package references
+
+Use `--references /path/to/packages` with independently acquired, versioned npm
+package directories or pinned source checkouts containing `package.json`.
+Reference discovery includes JS/TS/TSX implementation files and excludes declaration
+files, maps, and nested `node_modules` installations. Supply each intended library
+explicitly (or list its files and package root in a source manifest). Each package
+is an independent recovery unit, not a dependency to traverse from another library.
+The manifest retains `name`, `version`, `main`, `module`, `exports`, and `imports`
+from package metadata; this metadata participates in the inventory digest.
+
+Static module relationships use import/export syntax and those package descriptors.
+Typed relative imports written with `.js`, `.mjs`, or `.cjs` can resolve to supplied
+`.ts`, `.mts`, or `.cts` implementations after checking the literal path. Package-local
+`#imports` support exact and wildcard relative targets with import/require/default
+conditions. External `#imports` aliases remain unresolved. Package self-imports stay inside the owning package. Imports, reexports, `require`,
+and literal dynamic imports of another package remain unresolved in source mode,
+even when that dependency is supplied. Relative escapes, external aliases, nested
+package boundaries and filesystem symlink escapes are blocked. Package name, version,
+root and environment separate library instances. The bundled graph is resolved
+without library restrictions; `isolateLibraries: false` also exposes that mode to
+standalone module-graph callers.
+
+No source-map URL, mappings, `sources`, or `sourcesContent` is consumed. A source
+manifest is caller-supplied data: the tool cannot infer whether its files were
+previously extracted from a map. For source-map-independent experiments, obtain both
+reference bytes and package/version selection independently; historical dataset
+snapshot exports do not meet that provenance requirement. New dataset exports require
+`--references INDEPENDENT_PACKAGE_DIRECTORY` and never copy reference snapshots. Existing experiments
+are not migrated or reinterpreted by this resolver update.

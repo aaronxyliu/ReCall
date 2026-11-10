@@ -59,7 +59,7 @@ The pipeline JSON has `recovery`, `models`, `graph`, `modules`, and optional `bu
     "maxCodeCharacters": 18000,
     "maxRounds": 1000,
     "maxValidationCalls": null,
-    "crossChunk": false
+    "crossChunk": true
   },
   "models": {
     "endpoint": "http://127.0.0.1:11434",
@@ -91,7 +91,7 @@ Important settings:
 | `maxCodeCharacters` | JS string-code-unit limit for model promotions; POG anchors can still exceed it; bodies are not silently truncated |
 | `maxRounds` | Returns `round-limit` if expansion has not converged |
 | `maxValidationCalls` | Logical candidate-check budget, including cached checks; returns `budget-exhausted` when reached |
-| `crossChunk` | Permit a matched neighbor in another supplied target chunk |
+| `crossChunk` | Permit a matched neighbor in another supplied target chunk (default true); source-library isolation still applies |
 | `graph.useModules` | Enable/disable the module-aware graphs on both sides |
 
 CLI overrides exist for model names, endpoint, thinking, top-k, radius, feature/anchor thresholds, cross-chunk mode, library gating, validation budget, and cache directory; see `node bin/recall.mjs --help`. JSON supplies the remaining settings. Options are validated before matching. To use a different validator instruction, supply `models.systemPrompt` explicitly and evaluate it as a separate configuration.
@@ -123,3 +123,18 @@ Use `recall recover CAPTURED_DIRECTORY` for automatic input preparation, preflig
 The low-level `recoverFunctions` and `runPipeline` APIs accept an optional `candidateSelector({bundle,candidates,round,parentBundleIds})` callback. It returns a candidate source ID or `null`. Selection outside the computed neighborhood is rejected. This mode bypasses source minification, embeddings, ranking/top-k, validation, and model-client creation, while retaining graph neighborhoods, character limits, source reuse across bundled copies, synchronous rounds, and conflict handling. Outputs are labeled `selectionMode:external-neighborhood-selector` and promotions `externally-selected`; they are not model-recovery measurements.
 
 Ground truth belongs only in the experiment-side callback. Production components do not load it. The callback can choose the ground-truth source if it is in the supplied candidate pool, implementing the connectivity simulation protocol. Keep initial seeds, eligibility, graph options, and denominators fixed when comparing recorded experiments. This is an API-level evaluation hook, not a webpage recovery CLI default.
+
+
+Source isolation is mandatory in recovery. Anchor uniqueness, library detection,
+candidate ranking, accepted-target state and promotions are partitioned by source
+library (name/version/package root/environment). The full supplied bundle graph is
+shared; no source-map-derived bundle ownership is used. A bundled target can have
+independent hypotheses in different library partitions; these are retained rather
+than allowing one library to settle another's target. Each query/promotion carries
+`libraryScope`, and checkpoints record `scopePolicy`.
+
+A source graph with cross-library edges is rejected. Historical unpartitioned
+checkpoints cannot resume under this implementation; use a new output directory.
+All-unlabelled provided-reference inventories declare one reference unit; mixed
+labelled/unlabelled source inventories are rejected. Supply package roots to keep
+separate installations distinct. Validation budgets apply to the complete run.

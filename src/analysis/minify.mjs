@@ -1,3 +1,5 @@
+import {stripTypeScriptTypes} from 'node:module';
+import {parseTypeScript} from './typescript.mjs';
 import {minify_sync} from 'terser';
 import {parseScript,parseModule} from 'meriyah';
 import {parse} from 'acorn';
@@ -10,7 +12,26 @@ const cache=new Map();
 export function minifySourceFunction(code){
  if(cache.has(code))return cache.get(code);
  let binding='__recovery_candidate';while(code.includes(binding))binding+='_';
- const syntax=parseFunctionSyntax(code);
+ let syntax;
+ try{syntax=parseFunctionSyntax(code)}catch(original){
+  // Erase types only in a temporary representation, never the inventory.
+  for(const [prefix,suffix] of [['(',')'],['class __TypedHolder extends null {','}']]){
+   try{
+    const wrapped=prefix+code+suffix;parseTypeScript(wrapped);
+    let candidate;
+    try{const stripped=stripTypeScriptTypes(wrapped,{mode:'strip'});candidate=stripped.slice(prefix.length,stripped.length-suffix.length)}catch(error){
+     if(error.code!=='ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX')throw error;
+     const transformed=stripTypeScriptTypes(wrapped,{mode:'transform'});
+     const ast=parse(transformed,{ecmaVersion:'latest',sourceType:'module',checkPrivateFields:false});
+     const node=prefix==='('?ast.body[0]?.expression:ast.body[0]?.body?.body?.find(n=>n.type==='MethodDefinition');
+     if(ast.body.length!==1||!node)throw Error('TypeScript transform introduced enclosing statements');
+     candidate=transformed.slice(node.start,node.end);
+    }
+    parseFunctionSyntax(candidate);const compact=minifySourceFunction(candidate);cache.set(code,compact);return compact;
+   }catch{}
+  }
+  throw original;
+ }
  if(!syntax.method){
   let classSyntax=false;
   const scan=n=>{if(!n||typeof n!=='object')return;if(['PrivateIdentifier','Super'].includes(n.type))classSyntax=true;for(const v of Object.values(n))if(Array.isArray(v))v.forEach(scan);else if(v&&typeof v==='object')scan(v)};scan(syntax.root);

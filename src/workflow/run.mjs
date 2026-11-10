@@ -54,10 +54,10 @@ export async function runDirectory({output,config={},prepareOnly=false,resume=fa
   const stage=(name,fn)=>{progress({stage:name});const file=path.join(output,name+'.json');if(resume&&fs.existsSync(file))return readJSON(file);const value=fn();if(value!==null)save(name,value);return value};
   const libraries=stage('libraries',()=>identifyLibraries(source,bundle,config.recovery)),anchors=stage('anchors',()=>identifyAnchors(source,bundle,config.recovery));
   const sourceBundler=stage('sourceBundler',()=>identifyBundler(source)),bundleBundler=stage('bundleBundler',()=>identifyBundler(bundle,config.bundler));
-  const sourceModules=config.graph.useModules?stage('sourceModules',()=>resolveModules(source,{...config.modules,bundler:sourceBundler})):null;
-  const bundleModules=config.graph.useModules?stage('bundleModules',()=>resolveModules(bundle,{...config.modules,bundler:bundleBundler})):null;
+  const sourceModules=config.graph.useModules?stage('sourceModules',()=>resolveModules(source,{...config.modules,isolateLibraries:true,bundler:sourceBundler})):null;
+  const bundleModules=config.graph.useModules?stage('bundleModules',()=>resolveModules(bundle,{...config.modules,isolateLibraries:false,bundler:bundleBundler})):null;
   for(const [map,inventory]of [[sourceModules,source],[bundleModules,bundle]])if(map){checkModuleMap(map,inventory);for(const unit of map.units.filter(u=>u.contextOnly))if(!fs.existsSync(unit.path)||hash(fs.readFileSync(unit.path,'utf8'))!==hash(unit.code))throw Error('Resume context files changed; start a new run')}
-  const sourceGraph=stage('sourceGraph',()=>buildGraph(source,{...config.graph,moduleMap:sourceModules})),bundleGraph=stage('bundleGraph',()=>buildGraph(bundle,{...config.graph,moduleMap:bundleModules}));
+  const sourceGraph=stage('sourceGraph',()=>buildGraph(source,{...config.graph,isolateLibraries:true,moduleMap:sourceModules})),bundleGraph=stage('bundleGraph',()=>buildGraph(bundle,{...config.graph,isolateLibraries:false,moduleMap:bundleModules}));
   if(prepareOnly){save('status',{status:'prepared',modelCalls:0});return {status:'prepared'}}
   const checkpoint=path.join(output,'checkpoint.json'),prior=resume&&fs.existsSync(checkpoint)?readJSON(checkpoint):null;
   if(prior){const {checkpointDigest,...state}=prior;if(checkpointDigest!==hash(state))throw Error('Modified or incomplete checkpoint')}

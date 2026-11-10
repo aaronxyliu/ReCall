@@ -286,7 +286,7 @@ Graph relationships include calls and function references, including resolved im
 | Turbopack | Context operations and module registrations |
 | Parcel | Scoped loaders, module registrations, and exports |
 
-Resolution follows mechanisms present in the code. Compatible outputs can leave the bundler family ambiguous while still allowing relationships to be resolved. Flattened builds can erase original module boundaries; cross-chunk recovery also depends on supplying the relevant files and enabling `recovery.crossChunk` (default: `false`). See [module resolution](components/modules/README.md) and [adapter development](docs/adapters.md) for details and limitations.
+Resolution follows mechanisms present in the code. Compatible outputs can leave the bundler family ambiguous while still allowing relationships to be resolved. Flattened builds can erase original module boundaries; cross-chunk recovery uses all supplied files by default (`recovery.crossChunk: true`). Source relationships remain isolated to one library instance; this does not restrict the bundled module graph or discover additional files. See [module resolution](components/modules/README.md) and [adapter development](docs/adapters.md) for details and limitations.
 
 </details>
 
@@ -363,3 +363,46 @@ npm test
 Tests use synthetic fixtures and mock model/registry services, without real model inference. The [validation record](docs/component-validation.json) includes a real-repository connectivity check against recorded experiment results. Oracle-assisted simulation is an explicit experiment mode and is separate from normal model recovery.
 
 This repository contains the reusable tool. The sibling **ReCall Exp** and **ReCall Dataset** repositories hold experiments/paper materials and datasets; neither is required to run the public components. Historical scripts and recorded evidence are preserved for reproducibility. Dependency provenance is documented under `vendor/debun` and [third_party](third_party/README.md).
+
+### TypeScript reference inputs
+
+Reference inventories retain the original file bytes, function ranges, IDs, and
+function text. When JavaScript parsing fails, `@typescript-eslint/typescript-estree`
+provides a position-preserving analysis AST: type-only declarations/imports are
+excluded, type assertions and non-null wrappers are unwrapped, and constructor
+parameter properties contribute instance assignments. The graph parser uses the
+same typed analysis view. Candidate formatting erases types in a temporary copy;
+parameter properties use a temporary runtime transform. Neither operation replaces
+the original reference identity used in outputs or scoring.
+
+This is bounded TypeScript support, not a complete TypeScript compiler model.
+Constant numeric/string enums (including auto-increment and constant arithmetic)
+retain bindings and numeric reverse mappings in the analysis AST, without adding
+compiler-generated function identities. Const enums retain a binding without
+assuming a compiler-specific inlining policy. Nonconstant enum initializers,
+namespaces, import-equals/export-assignment syntax, and decorators
+on the TypeScript fallback path produce explicit diagnostics rather than being
+silently erased. Conditional `super` with parameter properties is also rejected.
+TSX can be parsed, but JSX is not lowered to framework calls. Inspect inventory and
+source-minification diagnostics. TypeScript support does not guarantee POG anchors:
+size thresholds, fingerprint changes, and ambiguous source fingerprints still apply.
+Existing JavaScript parser paths remain first. Start a new output directory after
+this implementation change; checkpoints made with the older tool are not compatible.
+
+
+### Library isolation
+
+Recovery treats each source package as a separate unit, using independently supplied
+name/version/package-root metadata. Source imports and reexports resolve only within
+that unit, including package self-imports, internal barrels and package-local aliases.
+External dependencies do not supply source graph edges or recovery anchors to another
+library. Anchor uniqueness and candidate/accepted state are also per library.
+The bundled module graph remains complete across supplied code without inferred
+library boundaries. Cross-library hypotheses for the same bundled function remain
+explicit, because bundled ownership is unknown.
+
+Use fresh output directories for this policy; old checkpoints are rejected and old
+results are not migrated or rewritten. Source-map files, mappings and extracted
+source snapshots must not supply recovery inputs. Obtain full source references
+independently from package archives or pinned source checkouts. Ground-truth maps
+remain confined to collection and offline scoring.
