@@ -42,7 +42,7 @@ test('canonical configuration is strict and paths are relative to its file',asyn
  assert.throws(()=>normalizeConfig({recovery:{topk:9}}),/Unknown/);
  assert.throws(()=>normalizeConfig({graph:{useModules:'false'}}),/Boolean/);
  assert.throws(()=>normalizeConfig({models:{think:false}}),/Unknown/);
- assert.equal(normalizeConfig().recovery.libraryGate,true);
+ assert.equal(normalizeConfig().recovery.libraryGate,false);
  assert.equal(normalizeConfig({inputs:{catalog:'catalog.json'}},{baseDir:'/tmp/project'}).inputs.catalog,'/tmp/project/catalog.json');
 });
 test('syntax-only project, in-memory analysis, and serialized replay preserve common identities and edges',async()=>{
@@ -95,7 +95,7 @@ test('directory CLI completes budget-limited recovery, resumes, exports identiti
  await run(process.execPath,[...args,'--max-validation-calls','1'],{cwd:root});assert.equal(JSON.parse(fs.readFileSync(path.join(output,'status.json'))).status,'budget-exhausted');
  await run(process.execPath,[...args,'--resume','--max-validation-calls','10'],{cwd:root});
  const summary=JSON.parse(fs.readFileSync(path.join(output,'summary.json'))),mapping=JSON.parse(fs.readFileSync(path.join(output,'recovered-functions.json')));
- assert.equal(summary.status,'fixed-point');assert.equal(summary.accuracy,null);assert(mapping.functions.some(f=>f.source.name==='helper'&&f.source.library.name==='example-library'));assert.equal(summary.validationCalls,2);
+ assert.equal(summary.status,'fixed-point');assert.equal(summary.accuracy,null);assert(mapping.functions.some(f=>f.source.name==='helper'&&f.source.library.name==='example-library'));assert.equal(summary.validationCalls,1);assert.equal(chats,0); // Only the AST acceptance remains; the unrelated model candidate is pruned.
  const previous=chats;await run(process.execPath,[...args,'--resume','--max-validation-calls','10'],{cwd:root});assert.equal(chats,previous);
  const help=await run(process.execPath,['bin/recall.mjs','graph','--help'],{cwd:root});assert(help.stdout.startsWith('graph --inventory'));assert(!fs.existsSync(path.join(output,'.recall.lock')));
 });
@@ -103,4 +103,12 @@ test('reference archive reader rejects links and traversal',async()=>{
  const {extractPackageArchive}=await import('../src/workflow/inputs.mjs');const directory=temp(),pkg=path.join(directory,'package');fs.mkdirSync(pkg);fs.symlinkSync('/tmp',path.join(pkg,'link'));
  const archive=execFileSync('tar',['-czf','-','package'],{cwd:directory,env:{...process.env,COPYFILE_DISABLE:'1'}});
  assert.throws(()=>extractPackageArchive(archive,path.join(directory,'target')),/links and special files/);
+});
+
+test('reference archive reader accepts a package root directory without slash',async()=>{
+ const {extractPackageArchive}=await import('../src/workflow/inputs.mjs');const {gzipSync}=await import('node:zlib');
+ const header=(name,type,size=0)=>{const b=Buffer.alloc(512);b.write(name);b.write(size.toString(8).padStart(11,'0')+'\0',124);b.write(type,156);return b};
+ const directory=temp(),body=Buffer.alloc(512);body.write('export const answer=42;');
+ const archive=gzipSync(Buffer.concat([header('package','5'),header('package/index.js','0',Buffer.byteLength('export const answer=42;')),body,Buffer.alloc(1024)]));
+ extractPackageArchive(archive,directory);assert.equal(fs.readFileSync(path.join(directory,'index.js'),'utf8'),'export const answer=42;');
 });

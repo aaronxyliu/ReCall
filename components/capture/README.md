@@ -77,4 +77,4 @@ const result = importPageFetch('./raw', {output: './prepared-input'});
 console.log(result.manifest, result.importedScripts);
 ```
 
-`parsePageFetchMetadata(text)` is also exported. The importer returns its report plus the absolute manifest path. See the [validation record](../../docs/page-fetch-validation.json): a real browser fixture reaches `prepared` with one POG anchor and zero model calls; a public-site capture imports six scripts and parses 3,848 functions in the recorded session. Public-site counts can change. `npm test` exercises saved-response fixtures and does not require Go, Chrome, page-fetch, or external network access.
+`parsePageFetchMetadata(text)` is also exported. The importer returns its report plus the absolute manifest path. `npm test` exercises saved-response fixtures and does not require Go, Chrome, page-fetch, or external network access.

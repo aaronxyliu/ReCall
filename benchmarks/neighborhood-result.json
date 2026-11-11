@@ -1,0 +1,58 @@
+{
+  "note": "Traversal microbenchmark using saved query parents, not end-to-end recovery timing or exact historical invocation order.",
+  "queries": 7783,
+  "lookups": 23784,
+  "uniqueSources": 4546,
+  "runs": [
+    {
+      "uncached": {
+        "ms": 59.43620800000002,
+        "memberships": 2054066
+      },
+      "cached": {
+        "ms": 2.2324580000000083,
+        "memberships": 2054066
+      }
+    },
+    {
+      "uncached": {
+        "ms": 56.69941699999998,
+        "memberships": 2054066
+      },
+      "cached": {
+        "ms": 1.9444169999999872,
+        "memberships": 2054066
+      }
+    },
+    {
+      "uncached": {
+        "ms": 56.248625000000004,
+        "memberships": 2054066
+      },
+      "cached": {
+        "ms": 1.9687089999999898,
+        "memberships": 2054066
+      }
+    },
+    {
+      "uncached": {
+        "ms": 56.28479200000004,
+        "memberships": 2054066
+      },
+      "cached": {
+        "ms": 1.9826250000000414,
+        "memberships": 2054066
+      }
+    },
+    {
+      "uncached": {
+        "ms": 59.02374999999995,
+        "memberships": 2054066
+      },
+      "cached": {
+        "ms": 3.212333000000001,
+        "memberships": 2054066
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import {test} from 'node:test';import assert from 'node:assert/strict';import {Analyzer} from './analyzer.mjs';import {parseModule} from '../bundling-dataset/parse.mjs';
+import {test} from 'node:test';import assert from 'node:assert/strict';import {Analyzer} from '../src/engine/analyzer.mjs';import {parseModule} from '../src/analysis/parse.mjs';
 function spec(id,code,p='/'+id+'.js'){const ast=parseModule(code,{next:true,ranges:true}),functions=[];function walk(n){if(/^(FunctionExpression|FunctionDeclaration|ArrowFunctionExpression)$/.test(n.type))functions.push({id:id+':'+(n.id?.name??n.range[0]),span:n.range});for(const [k,v]of Object.entries(n)){if(['range','loc'].includes(k))continue;for(const c of Array.isArray(v)?v:[v])if(c?.type)walk(c)}}walk(ast);return{id,path:p,code,functions}}
 function analyze(...ss){const a=new Analyzer();for(const s of ss)a.addUnit(s);return a.solve()}
 function has(r,a,b){return r.edges.some(e=>e.from===a&&e.to===b&&e.kind==='call')}

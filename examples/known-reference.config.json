@@ -1,0 +1,35 @@
+{
+  "recovery": {
+    "libraryGate": false,
+    "minFeatures": 10,
+    "featureMetric": "propertyOperations",
+    "uniqueBundle": false,
+    "topK": 3,
+    "astBeforeRanking": true,
+    "radius": 1,
+    "crossChunk": true,
+    "minSimilarity": -1,
+    "sourceRepresentation": "minified",
+    "conflictPolicy": "discard",
+    "maxCodeCharacters": 18000,
+    "maxRounds": 1000,
+    "maxValidationCalls": null,
+    "matchEdgeRoles": true
+  },
+  "models": {
+    "endpoint": "http://127.0.0.1:11434",
+    "embeddingModel": "qwen3-embedding:0.6b",
+    "validationModel": "qwen3.5:27b",
+    "thinking": false,
+    "temperature": 0,
+    "seed": 42,
+    "numCtx": 16384,
+    "numPredict": 384,
+    "astFirst": false
+  },
+  "graph": {
+    "useModules": true,
+    "siblingWindow": 2,
+    "includeContainment": true
+  }
+}

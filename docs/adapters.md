@@ -39,4 +39,4 @@ Exports/bindings retain only relationships statically resolved by the engine. Th
 
 Add synthetic fixtures covering normal and renamed bindings, cross-unit relationships, independent runtime scopes, unresolved IDs, serialization/replay, and the new syntax form. Assert that module-aware function edges survive a JSON handoff and that in-memory reuse gives the same edges. Run `npm test`. Existing fixtures cover webpack-compatible/Rspack, Turbopack, Parcel, Rolldown helper, and native ESM cases. These tests check mechanisms; they do not establish generalization to every bundler release.
 
-Engine fingerprints include all analysis/adapter source files, so changed adapters invalidate saved module maps and run checkpoints. Keep historical experiment files under `scripts/` unchanged when extending public runtime code.
+Engine fingerprints include all analysis/adapter source files, so changed adapters invalidate saved module maps and run checkpoints. Keep historical experiment snapshots in ReCall Exp unchanged when extending runtime code.

@@ -4,7 +4,7 @@
   "version": "0.3.1",
   "type": "module",
   "scripts": {
-    "test": "node --test scripts/real-app/bundle-graph-v2/*.test.mjs scripts/jquery/promotion-policy.test.mjs scripts/jquery/validator-policy.test.mjs scripts/jquery/variable-mapping-policy.test.mjs test/*.test.mjs",
+    "test": "node --test test/*.test.mjs",
     "graph": "node bin/recall.mjs graph",
     "recover": "node bin/recall.mjs recover",
     "prepare:example": "node bin/recall.mjs recover examples/minimal/bundle --references examples/minimal/source --config examples/minimal/config.json --prepare-only --out outputs/minimal-prepared"

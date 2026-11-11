@@ -70,8 +70,10 @@ test('complete pipeline recovers imported helper with model decisions and no ora
  assert(!local.recovery.promotions.some(p=>p.sourceId===helper.id));
 });
 test('library gating and validation budgets are explicit terminal states',async()=>{
- const {source,bundle}=inputs();const gated=await runPipeline({source,bundle,config:{...config,recovery:{astBeforeRanking:false,minAnchors:2}},models:mock()});
+ const {source,bundle}=inputs();const gated=await runPipeline({source,bundle,config:{...config,recovery:{astBeforeRanking:false,libraryGate:true,minAnchors:2}},models:mock()});
  assert.equal(gated.recovery.promotions.length,0);assert.equal(gated.recovery.stats.validationCalls,0);
+ const ungated=await runPipeline({source,bundle,config:{...config,recovery:{astBeforeRanking:false,minAnchors:2}},models:mock()});
+ assert(ungated.recovery.promotions.length>0,'default recovery must admit supplied libraries below the identification threshold');
  const r=await runPipeline({source,bundle,config:{...config,recovery:{astBeforeRanking:false,minAnchors:1,maxValidationCalls:1}},models:mock()});
  assert.equal(r.recovery.status,'budget-exhausted');assert.equal(r.recovery.stats.validationCalls,1);
 });

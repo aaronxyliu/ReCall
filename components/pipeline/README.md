@@ -38,7 +38,7 @@ The source manifest provides local, versioned reference files. Capturing JS and 
 node bin/recall.mjs recover --source outputs/prepared-example/source.json --bundle outputs/prepared-example/bundle.json --source-graph outputs/prepared-example/sourceGraph.json --bundle-graph outputs/prepared-example/bundleGraph.json --anchors outputs/prepared-example/anchors.json --libraries outputs/prepared-example/libraries.json --config examples/minimal/config.json --out outputs/recovery-only.json --library-gate true
 ```
 
-For `run`, library gating defaults to **true**: only reference libraries meeting the required anchor count enter the matching pool. Versioned library metadata is required. For `recover`/`recoverFunctions`, it also defaults to **true**. Set `libraryGate:false` explicitly when the supplied references are already a justified candidate set. When gating is enabled, all passing version candidates remain available; indistinguishable versions may prevent unique anchors rather than being silently guessed.
+For `run`, `recover`, and `recoverFunctions`, library gating defaults to **false**: all supplied reference libraries enter the matching pool, while source relationships remain isolated per library. Set `libraryGate:true` explicitly to require the configured anchor count and versioned library metadata. When gating is enabled, all passing version candidates remain available; indistinguishable versions may prevent unique anchors rather than being silently guessed.
 
 ## Configuration
 
@@ -50,7 +50,7 @@ The pipeline JSON has `recovery`, `models`, `graph`, `modules`, and optional `bu
     "minFeatures": 10,
     "featureMetric": "propertyOperations",
     "minAnchors": 3,
-    "libraryGate": true,
+    "libraryGate": false,
     "topK": 3,
     "astBeforeRanking": true,
     "radius": 1,

@@ -1,6 +1,6 @@
 # Shared analysis engine
 
-This is the component-facing port of the existing `scripts/real-app/bundle-graph-v2` analyzer. The original experiment implementation is retained unchanged because experiment snapshots and hash manifests refer to it.
+This is the component-facing port of the existing `scripts/real-app/bundle-graph-v2` analyzer. Historical implementations are maintained in the separate ReCall Exp repository; current engine regression tests live in test/engine-*.test.mjs.
 
 The port adds one boundary: module recognition can record a serializable registration/loader plan or consume a supplied plan. Plans address AST nodes by source ranges and are tied to exact input and engine hashes. `components/modules` records the plan; `components/graph` consumes it. The shared lexical binding/value-flow solver remains necessary on both sides of that boundary: a factory registration alone does not resolve the function value exported by it.
 

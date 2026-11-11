@@ -1,3 +1,5 @@
+import {edgeRoles,supportedByEdgeRole} from '../../src/analysis/edge-roles.mjs';
+import {adjacency,neighborhoodLookup} from '../../src/analysis/neighborhood.mjs';
 import {sourceScopes} from '../../src/analysis/library-scope.mjs';
 import {matchingMultiplicity} from '../../src/shared/matches.mjs';
 import {performance} from 'node:perf_hooks';
@@ -12,8 +14,6 @@ import {createModelClient,cosine} from './models.mjs';
 
 import {recoveryDefaults,recoveryOptions,normalizeConfig} from '../../src/config.mjs';
 export {recoveryDefaults,recoveryOptions};
-function adjacency(graph){const g=new Map(graph.functions.map(f=>[f.id,new Set()]));for(const e of graph.edges){g.get(e.from).add(e.to);g.get(e.to).add(e.from)}return g}
-function neighbors(id,g,radius){const seen=new Set([id]);let front=[id];for(let r=0;r<radius;r++){const next=[];for(const u of front)for(const v of g.get(u)||[])if(!seen.has(v)){seen.add(v);next.push(v)}front=next}seen.delete(id);return seen}
 
 export async function recoverFunctions({source,bundle,sourceGraph,bundleGraph,anchors=null,libraries=null,config={},models=null,onCheckpoint=null,onProgress=null,resume=null,signal=null,candidateSelector=null}){
  const started=performance.now(),o=recoveryOptions(Object.fromEntries(Object.entries(config).filter(([key])=>key!=='models')));checkInventory(source);checkInventory(bundle);checkGraph(sourceGraph,source);checkGraph(bundleGraph,bundle);
@@ -33,7 +33,7 @@ export async function recoverFunctions({source,bundle,sourceGraph,bundleGraph,an
   if(libraries.libraries.some(x=>!x.libraryScope))throw Error('Library detection predates isolation; identify libraries again');
   allowed=new Set(source.functions.filter(f=>detected.has(scopeOf.get(f.id))).map(f=>f.id));
  }
- const sg=adjacency(sourceGraph),bg=adjacency(bundleGraph),accepted=new Map(),promotions=[],queries=[],processed=new Set(),minified=new Map(),vectors=new Map();
+ const sg=adjacency(sourceGraph),bg=adjacency(bundleGraph),sourceNeighbors=neighborhoodLookup(sg,o.radius),bundleNeighbors=neighborhoodLookup(bg,o.radius),accepted=new Map(),promotions=[],queries=[],processed=new Set(),minified=new Map(),vectors=new Map();
  const retain=o.conflictPolicy==='retain';
  const addAccepted=(b,s)=>{if(!accepted.has(b))accepted.set(b,new Set());accepted.get(b).add(s)};
  for(const p of anchors.matches){
@@ -43,7 +43,7 @@ export async function recoverFunctions({source,bundle,sourceGraph,bundleGraph,an
  }
  if(candidateSelector!==null&&typeof candidateSelector!=='function')throw Error('candidateSelector must be a function');
  const client=candidateSelector?{config:{provider:'external-neighborhood-selector'},stats:{requests:0}}:models||createModelClient(config.models,{signal});
- const stats={validationCalls:0,embeddingFunctions:0,rounds:0,conflicts:0,astPreRankingChecks:0,astPreRankingAccepted:0},diagnostics=[];let status='fixed-point',firstRound=1,pendingRound=null,lastCheckpoint=performance.now();
+ const stats={validationCalls:0,embeddingFunctions:0,rounds:0,conflicts:0,astPreRankingChecks:0,astPreRankingAccepted:0,relationshipCandidatesPruned:0,relationshipQueriesPruned:0},diagnostics=[];let status='fixed-point',firstRound=1,pendingRound=null,lastCheckpoint=performance.now();
  if(resume){
   artifact(resume,'recall.recovery/v1');if(resume.scopePolicy!=='per-library-source/full-bundle-v1')throw Error('Resume predates strict library isolation; start a new run');if((resume.selectionMode||'model')!==(candidateSelector?'external-neighborhood-selector':'model'))throw Error('Resume selection mode changed');sameInput(resume.sourceDigest,source.inputDigest);sameInput(resume.bundleDigest,bundle.inputDigest);
   if(resume.graphDigests.source!==sourceGraph.graphDigest||resume.graphDigests.bundle!==bundleGraph.graphDigest)throw Error('Resume graph mismatch');
@@ -57,6 +57,7 @@ export async function recoverFunctions({source,bundle,sourceGraph,bundleGraph,an
   firstRound=resume.pendingRound?.round||resume.nextRound||stats.rounds+1;
   if(o.maxValidationCalls!==null&&o.maxValidationCalls<stats.validationCalls)throw Error('Resume validation budget is below completed work');
  }
+ const sourceRoles=edgeRoles(sourceGraph),bundleRoles=edgeRoles(bundleGraph);
  const priorChecks=new Map();if(resume)for(const query of queries)for(const check of query.checks)if(check.reusableAfterMigration!==false&&['accept','reject'].includes(check.verdict))priorChecks.set(JSON.stringify([query.bundleId,check.sourceId]),check);
  const representation=s=>{if(!minified.has(s.id))minified.set(s.id,minifySourceFunction(s.code));return minified.get(s.id)};
  async function vector(fs,role){
@@ -79,10 +80,10 @@ export async function recoverFunctions({source,bundle,sourceGraph,bundleGraph,an
    // A matched target is settled, including anchors. A source identity can
    // identify additional bundled copies in the same or a different chunk.
    if(hasScope(prior,b.id,libraryScope)||reserved.has(JSON.stringify([libraryScope,b.id]))||b.code.length>o.maxCodeCharacters)continue;
-   const parents=[...neighbors(b.id,bg,o.radius)].filter(id=>hasScope(prior,id,libraryScope)&&(o.crossChunk||bm.get(id).unit===b.unit));
+   const parents=[...bundleNeighbors(b.id)].filter(id=>hasScope(prior,id,libraryScope)&&(o.crossChunk||bm.get(id).unit===b.unit));
    if(!parents.length)continue;
    const candidates=new Set();
-   for(const parent of parents)for(const parentSource of prior.get(parent))if(scopeOf.get(parentSource)===libraryScope)for(const id of neighbors(parentSource,sg,o.radius))if(scopeOf.get(id)===libraryScope&&allowed.has(id)&&sm.get(id).code.length<=o.maxCodeCharacters)candidates.add(id);
+   for(const parent of parents)for(const parentSource of prior.get(parent))if(scopeOf.get(parentSource)===libraryScope)for(const id of sourceNeighbors(parentSource))if(scopeOf.get(id)===libraryScope&&allowed.has(id)&&sm.get(id).code.length<=o.maxCodeCharacters)candidates.add(id);
    const list=[...candidates].filter(id=>{try{if(!candidateSelector)representation(sm.get(id));return true}catch(error){if(!diagnostics.some(d=>d.function===id))diagnostics.push({kind:'source-minification-error',function:id,error:error.message});return false}}).sort((a,b)=>sourceIndex.get(a)-sourceIndex.get(b));if(!list.length)continue;
    const state=hash([libraryScope,b.id,list,parents.map(p=>[p,[...prior.get(p)].filter(s=>scopeOf.get(s)===libraryScope).sort()])]);if(processed.has(state))continue;processed.add(state);
    if(candidateSelector){
@@ -114,9 +115,19 @@ export async function recoverFunctions({source,bundle,sourceGraph,bundleGraph,an
      continue;
     }
    }
-   const sources=list.map(id=>sm.get(id)),sv=await vector(sources,'source'),[bv]=await vector([b],'bundle');
+   // Keep POG/AST acceptance unchanged. Restrict expensive ranking/validation
+   // only after the AST precheck has failed, using current accepted parents.
+   const eligible=list.filter(id=>supportedByEdgeRole(id,b.id,parents,prior,sourceRoles,bundleRoles,id=>scopeOf.get(id)===libraryScope));
+   const relationshipPruned=list.length-eligible.length;
+   stats.relationshipCandidatesPruned+=relationshipPruned;
+   if(!eligible.length){
+    stats.relationshipQueriesPruned++;
+    queries.push({bundleId:b.id,round,libraryScope,parentBundleIds:parents,candidatePoolSize:list.length,relationshipPruned,candidates:[],checks:[],status:'relationship-pruned'});
+    continue;
+   }
+   const sources=eligible.map(id=>sm.get(id)),sv=await vector(sources,'source'),[bv]=await vector([b],'bundle');
    const ranked=sources.map((s,i)=>({sourceId:s.id,score:cosine(bv,sv[i])})).filter(x=>x.score>=o.minSimilarity).sort((a,b)=>b.score-a.score||sourceIndex.get(a.sourceId)-sourceIndex.get(b.sourceId));
-   const q={bundleId:b.id,round,libraryScope,...(resume?.continuation?{phase:resume.continuation.id}:{}),parentBundleIds:parents,candidates:ranked,checks:[],status:'unresolved'};queries.push(q);
+   const q={bundleId:b.id,round,libraryScope,...(resume?.continuation?{phase:resume.continuation.id}:{}),parentBundleIds:parents,candidatePoolSize:list.length,relationshipPruned,candidates:ranked,checks:[],status:'unresolved'};queries.push(q);
    for(const candidate of ranked.slice(0,o.topK)){
     if(retain&&prior.get(b.id)?.has(candidate.sourceId))continue;
     if(signal?.aborted)throw signal.reason||Error('Recovery interrupted');

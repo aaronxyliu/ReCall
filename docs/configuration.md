@@ -2,12 +2,12 @@
 
 Every CLI command accepts the same **nested** configuration object. It reads the relevant section and validates all sections. Unknown settings and invalid types fail before analysis; old flat component configuration files must be migrated. Copy `examples/recall.config.json` as a starting point.
 
-Precedence is built-in defaults → configuration file → explicit CLI overrides. Configuration paths are relative to the configuration file. CLI paths are relative to the current working directory. Runs save every resolved default and override in `resolved-config.json`; standalone component commands save `OUTPUT.config.json` beside their artifact. Library gating defaults to **true** for both integrated and standalone recovery; explicitly set `recovery.libraryGate:false` when references are already selected and gating is intentionally omitted.
+Precedence is built-in defaults → configuration file → explicit CLI overrides. Configuration paths are relative to the configuration file. CLI paths are relative to the current working directory. Runs save every resolved default and override in `resolved-config.json`; standalone component commands save `OUTPUT.config.json` beside their artifact. Library gating defaults to **false** for both integrated and standalone recovery: all supplied reference libraries are eligible. Set `recovery.libraryGate:true` to require the library-identification anchor threshold. Source relationships remain isolated per library.
 
 | Section | Main settings and defaults |
 |---|---|
 | `inputs` | `references:null`, `catalog:null`, `cacheDir:null`, `registry:"https://registry.npmjs.org"`, `offline:false`, `timeoutMs:300000`, `maxFiles:20000`, `maxBytes:1073741824` |
-| `recovery` | `minFeatures:10`, `featureMetric:"propertyOperations"`, `minAnchors:3`, `uniqueBundle:false`, `libraryGate:true`, `topK:3`, `astBeforeRanking:true`, `radius:1`, `crossChunk:true`, `minSimilarity:-1`, `sourceRepresentation:"minified"`, `maxCodeCharacters:18000`, `maxRounds:1000`, `maxValidationCalls:null` |
+| `recovery` | `minFeatures:10`, `featureMetric:"propertyOperations"`, `minAnchors:3`, `uniqueBundle:false`, `libraryGate:false`, `topK:3`, `astBeforeRanking:true`, `matchEdgeRoles:true`, `radius:1`, `crossChunk:true`, `minSimilarity:-1`, `sourceRepresentation:"minified"`, `maxCodeCharacters:18000`, `maxRounds:1000`, `maxValidationCalls:null` |
 | `models` | `endpoint:"http://127.0.0.1:11434"`, `embeddingModel:"qwen3-embedding:0.6b"`, `validationModel:"qwen3.5:27b"`, `thinking:false`, `temperature:0`, `seed:42`, `numCtx:16384`, `numPredict:384`, `embeddingBatch:12`, `timeoutMs:300000`, `keepAlive:"60m"`, `cacheDir:null`, `systemPrompt:null` |
 | `graph` | `useModules:true`, `siblingWindow:2`, `includeContainment:true` |
 | `modules` | `followDependencies:true`, `valueLimit:64`, `eventLimit:50000000`, `maxFiles:20000`, `maxBytes:1073741824` |
@@ -72,3 +72,58 @@ caches, while reopening unmatched targets. They are incremental experiments,
 not fresh runs of a single configuration. Large JSON artifacts use bounded
 serialization, compatible streaming checksums, and streamed reads; AST-before-ranking
 runs also persist pending in-round proposals approximately every two minutes.
+
+### Known-reference experiment configuration
+
+Use [examples/known-reference.config.json](../examples/known-reference.config.json)
+with explicit source and bundle manifests to match the recovery settings of the
+2026-11-10 cross-chunk simulation. It disables the library-identification gate
+(`libraryGate:false`), while preserving strict per-library source isolation. The
+ordinary default is also `libraryGate:false`. Opting into `libraryGate:true`
+requires three distinct source anchors per library before recovery. Catalog discovery independently selects
+libraries by its anchor threshold; use supplied manifests for this comparison.
+
+```sh
+node bin/recall.mjs run --source-manifest /path/to/source.json \
+  --bundle-manifest /path/to/bundle.json \
+  --config examples/known-reference.config.json --out outputs/known-reference
+```
+
+The profile uses real `qwen3-embedding:0.6b` embeddings and real `qwen3.5:27b`
+validation through Ollama. Simulation replaced only model validation with GT
+decisions; it did not replace embeddings, POG anchors, or AST prechecks. Therefore
+this profile aligns settings, not guaranteed scores. Use identical source bytes,
+original spans, package roots and supplied bundle files, plus matching model
+digests and implementation, for a controlled comparison. No source-map labels
+are consumed by recovery. Preserve old results and start a new output directory.
+
+`recovery.astBeforeRanking:true` already checks the eligible candidate pool before
+embedding ranking. `models.astFirst:false` disables only the separate validator
+shortcut; it does not turn off that pipeline AST precheck. The AST ambiguity
+mitigations discussed in the experiment audit have not been implemented by this
+configuration change.
+
+### Relationship pruning before model validation
+
+Recovery always uses `recovery.matchEdgeRoles:true` (see
+[examples/fast-validation.config.json](../examples/fast-validation.config.json))
+and requires one currently accepted parent pair supporting the same relationship
+kind **and direction** on source and bundle sides. A source callee of an anchor,
+for example, is compatible with a bundle callee of the corresponding anchor; a
+caller or mere sibling alone does not provide that same support. Any shared
+role suffices, and cross-chunk bundle edges remain eligible. Only same-library
+source parents can support a candidate. The supported recovery radius is 1.
+
+POG anchors and the AST precheck are unchanged. After an AST miss, incompatible
+candidates are removed before embedding/ranking; the top three remaining
+candidates are validated normally. Empty pools make no embedding or validation
+requests. Queries record `candidatePoolSize`, `relationshipPruned`, and
+`status:"relationship-pruned"` when appropriate; statistics record
+`relationshipCandidatesPruned` and `relationshipQueriesPruned`. Counts describe
+processed query states, not unique function pairs.
+
+This is a search heuristic, **not proof of semantic inequivalence**.
+Compilation and incomplete graphs can change relationships and remove correct
+candidates. The unfiltered implementation has been removed; `matchEdgeRoles:false` is rejected.
+Start a fresh output directory when migrating from unfiltered recovery. No GT labels or source-map
+information are consulted by the filter.

@@ -4,7 +4,8 @@
     "minAnchors": 1,
     "topK": 5,
     "radius": 1,
-    "libraryGate": true
+    "libraryGate": false,
+    "matchEdgeRoles": true
   },
   "graph": {
     "useModules": true,

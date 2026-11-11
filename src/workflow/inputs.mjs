@@ -66,6 +66,7 @@ export function extractPackageArchive(archive,directory,{maxBytes=1073741824,max
   }
   if(type==='L'){nextPath=body.toString().replace(/\0.*$/s,'');continue}
   if(!['0','5'].includes(type))throw Error('Unsupported npm archive entry (links and special files are excluded)');
+  if(type==='5'&&name==='package')continue; // npm archives may include the root directory without a trailing slash.
   if(!name.startsWith('package/')||name.includes('\\')||name.split('/').includes('..')||name.includes('\0'))throw Error('Unsafe npm archive path');
   const relative=name.slice(8);if(!relative)continue;
   const target=path.resolve(root,relative);if(!target.startsWith(root+path.sep))throw Error('Unsafe npm archive path');
