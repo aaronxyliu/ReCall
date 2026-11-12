@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">ReCall — recovering function identities</title>
+  <desc id="desc">The Re monogram accompanies a mint code-function node restored to a blue relationship graph. A return arrow points into its dashed missing-node slot, representing function recovery and renewed propagation.</desc>
+  <defs>
+    <linearGradient id="tile" x1="15" y1="8" x2="117" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#193A60"/>
+      <stop offset="1" stop-color="#10253F"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#tile)"/>
+  <!-- Existing functions and their relationships. -->
+  <path d="M32 40V88H80M32 40L80 88" stroke="#668AB6" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Restored connections extend the graph to the recovered function. -->
+  <path d="M40 40H66M83 60V80" stroke="#5EEAD4" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="32" cy="40" r="7.5" fill="#BFD8F5"/>
+  <circle cx="32" cy="88" r="7.5" fill="#BFD8F5"/>
+  <circle cx="80" cy="88" r="7.5" fill="#BFD8F5"/>
+  <!-- A previously missing function slot, now filled with recovered code. -->
+  <rect x="61" y="21" width="44" height="44" rx="13" stroke="#5EEAD4" stroke-width="2" stroke-dasharray="3 4" opacity="0.65"/>
+  <rect x="66" y="26" width="34" height="34" rx="9" fill="#5EEAD4"/>
+  <path d="M78 34C73 34 77 40 72 43C77 46 73 52 78 52M88 34C93 34 89 40 94 43C89 46 93 52 88 52" stroke="#102B47" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Return the recovered function to its place in the graph. -->
+  <path d="M105 101C119 80 120 54 109 43" stroke="#5EEAD4" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M100 43L113 35L112 51Z" fill="#5EEAD4"/>
+  <!-- Re monogram, drawn as paths to render consistently without fonts. -->
+  <path d="M25 117V99H33C37 99 39 101 39 104.5C39 108 37 110 33 110H25M32 110L40 117" stroke="#E3F1FF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M47 110H59C59 106 57 104 53 104C49 104 46 107 46 111C46 115 49 118 53 118C55.5 118 57.5 117.3 59 116" stroke="#E3F1FF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

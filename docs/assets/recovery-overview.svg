@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="398" viewBox="0 0 1120 398" role="img" aria-labelledby="title desc">
+<title id="title">From minified website JavaScript to original library functions</title>
+<desc id="desc">Illustrative example: ReCall analyzes a webpack-style minified bundle and connects its anonymous function to lodash 4.17.21 isObject, showing library identity, bundling strategy, and original source logic.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#64849d"/></marker></defs>
+<rect width="1120" height="398" rx="18" fill="#f6f8fb"/>
+<g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif">
+<rect x="18" y="18" width="420" height="362" rx="14" fill="white" stroke="#dce4ed"/>
+<text x="38" y="51" font-size="19" font-weight="700" fill="#183553">Captured website JavaScript</text>
+<text x="38" y="76" font-size="14" fill="#61768a">Bundled modules · minified names · hidden origins</text>
+<rect x="34" y="97" width="388" height="204" rx="10" fill="#122b45"/>
+<text x="50" y="122" font-size="12" fill="#8faac4">app.min.js</text>
+<text x="50" y="159" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13" fill="#d7e7f4" xml:space="preserve">(self.webpackChunkapp=self.webpackChunkapp</text><text x="50" y="189" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13" fill="#d7e7f4" xml:space="preserve">||[]).push([[42],{731:e=&gt;{e.exports=</text><text x="50" y="219" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13" fill="#d7e7f4" xml:space="preserve">function(e){var t=typeof e;return null!=e</text><text x="50" y="249" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13" fill="#d7e7f4" xml:space="preserve">&amp;&amp;(&quot;object&quot;==t||&quot;function&quot;==t)}}}]);</text><text x="38" y="333" font-size="14" fill="#61768a">Which library and version does this belong to?</text>
+<text x="38" y="355" font-size="14" fill="#61768a">What was the original function?</text>
+<path d="M446 199H466" stroke="#64849d" stroke-width="2.5" marker-end="url(#arrow)"/><path d="M622 199H644" stroke="#64849d" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="478" y="151" width="132" height="96" rx="16" fill="#193a60"/>
+<text x="544" y="186" text-anchor="middle" fill="white" font-size="25" font-weight="700">ReCall</text>
+<text x="544" y="211" text-anchor="middle" fill="#8ce7d5" font-size="12">Identify · resolve</text>
+<text x="544" y="230" text-anchor="middle" fill="#8ce7d5" font-size="12">match functions</text>
+<rect x="658" y="18" width="444" height="362" rx="14" fill="white" stroke="#b7dccc"/>
+<text x="678" y="51" font-size="19" font-weight="700" fill="#183553">Recovered library information</text>
+<text x="678" y="82" font-size="14" fill="#61768a">Library</text>
+<text x="762" y="82" font-size="15" font-weight="600" fill="#183553">lodash</text>
+<text x="901" y="82" font-size="14" fill="#61768a">Version</text>
+<text x="971" y="82" font-size="15" font-weight="600" fill="#183553">4.17.21</text>
+<text x="678" y="109" font-size="14" fill="#61768a">Bundling</text>
+<text x="762" y="109" font-size="14" fill="#183553">webpack 5 style · CommonJS exports</text>
+<rect x="674" y="129" width="412" height="198" rx="10" fill="#eef8f4"/>
+<text x="690" y="155" font-size="12" font-weight="600" fill="#38765f">Original source · lodash/isObject.js</text>
+<text x="690" y="184" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13.5" fill="#183f36" xml:space="preserve">function isObject(value) {</text><text x="690" y="207" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13.5" fill="#183f36" xml:space="preserve">  var type = typeof value;</text><text x="690" y="230" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13.5" fill="#183f36" xml:space="preserve">  return value != null &amp;&amp;</text><text x="690" y="253" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13.5" fill="#183f36" xml:space="preserve">    (type == &#x27;object&#x27; ||</text><text x="690" y="276" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13.5" fill="#183f36" xml:space="preserve">     type == &#x27;function&#x27;);</text><text x="690" y="299" font-family="ui-monospace,SFMono-Regular,Consolas,monospace" font-size="13.5" fill="#183f36" xml:space="preserve">}</text><text x="678" y="355" font-size="14" fill="#38765f">Bundled location → original library implementation</text>
+</g></svg>

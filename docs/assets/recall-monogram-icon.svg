@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">ReCall — function recovery</title>
+  <desc id="desc">The Re monogram sits inside code braces and a blue-to-mint return arrow, combining the ReCall name with code recovery in a single mark.</desc>
+  <defs>
+    <linearGradient id="tile" x1="15" y1="8" x2="117" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#193A60"/>
+      <stop offset="1" stop-color="#10253F"/>
+    </linearGradient>
+    <linearGradient id="loop" x1="91" y1="27" x2="95" y2="99" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#5EEAD4"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#tile)"/>
+  <path d="M94 34C76 16 47 18 31 37C15 56 19 85 39 99C61 114 90 105 103 83" stroke="url(#loop)" stroke-width="7" stroke-linecap="round"/>
+  <path d="M107 72L108 91L91 82Z" fill="#5EEAD4"/>
+  <path d="M40 46C31 46 37 57 28 63C37 69 31 80 40 80" stroke="#F1F5F9" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M86 46C95 46 89 57 98 63C89 69 95 80 86 80" stroke="#F1F5F9" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Custom Re lettering forms the code being recovered; no font dependency. -->
+  <path d="M47 76V51H54C63 51 63 64 54 64H47M54 64L63 76" stroke="#5EEAD4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M69 67H82C82 62 80 59 76 59C71 59 68 62.5 68 67.5C68 73 71 76 76 76C78.5 76 80.5 75 82 73.5" stroke="#5EEAD4" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

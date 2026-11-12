@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">ReCall</title>
+  <desc id="desc">A clear Re monogram above a subtle mint return arrow. The open e remains distinct, and the arrow tip sits below the R with ample space.</desc>
+  <defs>
+    <linearGradient id="tile" x1="15" y1="8" x2="117" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#193A60"/>
+      <stop offset="1" stop-color="#10253F"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#tile)"/>
+  <!-- Letterforms are paths, so the mark needs no installed fonts. -->
+  <path d="M32 79V39H44C61 39 61 61 44 61H32M44 61L60 79" stroke="#F1F5F9" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Keep the e's open terminal distinct from the lighter return gesture. -->
+  <path d="M70 63H97C97 46 73 46 70 61C66 78 85 85 96 75" stroke="#5EEAD4" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- A small gap and thinner stroke keep the arrow secondary to the monogram. -->
+  <path d="M103 86C101 102 59 107 30 94M39 94L30 94L34 102" stroke="#5EEAD4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+</svg>
