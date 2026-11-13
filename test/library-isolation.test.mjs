@@ -8,7 +8,7 @@ import {preparePipeline,recoverFunctions} from '../components/pipeline/index.mjs
 import {createSourceResolver} from '../src/analysis/source-resolution.mjs';
 const library=name=>({name,version:'1.0.0'});
 const anchor='function anchor(o){o.a;o.b;o.c;o.d;o.e;o.f;o.g;o.h;o.i;o.j;return o}';
-const config={recovery:{libraryGate:false,astBeforeRanking:false},graph:{useModules:false}};
+const config={recovery:{neighborhoodOrder:'bundle-first',oneBundlePerSource:false,libraryGate:false,astBeforeRanking:false},graph:{useModules:false}};
 function inputs(){const source=extractFeatures({files:['a','b'].map(name=>({id:name,path:name+'/index.js',code:anchor+' function next(x){return x+1}',library:library(name),packageRoot:name}))});const bundle=extractFeatures({files:[{path:'bundle.js',code:anchor+' function target(x){return x+2}'}]});return {source,bundle}}
 test('each library has independent anchors, candidate pools and accepted targets against the full bundle',async()=>{
  const {source,bundle}=inputs(),prepared=preparePipeline({source,bundle,config});

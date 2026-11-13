@@ -8,7 +8,7 @@ export function migrateGraphSyntax({prior,source,bundle,oldSourceGraph,oldBundle
  checkInventory(source);checkInventory(bundle);
  for(const [g,i]of [[oldSourceGraph,source],[sourceGraph,source],[oldBundleGraph,bundle],[bundleGraph,bundle]])checkGraph(g,i);
  if(prior.sourceDigest!==source.inputDigest||prior.bundleDigest!==bundle.inputDigest||prior.graphDigests.source!==oldSourceGraph.graphDigest||prior.graphDigests.bundle!==oldBundleGraph.graphDigest)throw Error('Graph continuation requires unchanged inventories and verified old graphs');
- const before={...prior.configuration,astBeforeRanking:true},after={...configuration};delete before.models;delete after.models;
+ const before={oneBundlePerSource:false,neighborhoodOrder:'bundle-first',...prior.configuration,astBeforeRanking:true},after={oneBundlePerSource:false,neighborhoodOrder:'bundle-first',...configuration};if(before.allowCorroboratedAstCopies===false)delete before.allowCorroboratedAstCopies;delete before.models;delete after.models;
  if(configuration.astBeforeRanking!==true||configuration.topK!==3||configuration.minSimilarity!==-1||configuration.conflictPolicy!=='retain'||hash(sorted(before))!==hash(sorted(after)))throw Error('Graph continuation changes unrelated recovery settings');
  const modelSettings=x=>sorted(Object.fromEntries(Object.entries(x||{}).filter(([k])=>k!=='cacheDir')));
  if(hash(modelSettings(prior.models))!==hash(modelSettings(models)))throw Error('Graph continuation changes model settings');

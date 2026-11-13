@@ -28,7 +28,7 @@ test('pipeline prunes an opposite-direction candidate before embeddings and vali
  const source=extractFeatures({files:[{id:'s',path:'/s.js',library:{name:'lib',version:'1'},code:`function anchor(o){${properties}return callee(o)}function caller(x){return anchor(x)+7}function callee(x){return x+1}`} ]});
  const bundle=extractFeatures({files:[{id:'b',path:'/b.js',code:`function anchor(o){${properties}return target(o)}function target(x){return x+2}`} ]});
  const callee=source.functions.find(f=>f.name==='callee');
- async function run(){const validated=[];const result=await runPipeline({source,bundle,config:{recovery:{astBeforeRanking:false},graph:{useModules:false,siblingWindow:0,includeContainment:false}},models:{config:{provider:'test'},async embed(xs){return xs.map(()=>[1,1])},async validate({source}){validated.push(source.name);return {verdict:source.id===callee.id?'accept':'reject',validator:'model'}}}});return {result:result.recovery,validated}}
+ async function run(){const validated=[];const result=await runPipeline({source,bundle,config:{recovery:{neighborhoodOrder:'bundle-first',oneBundlePerSource:false,astBeforeRanking:false},graph:{useModules:false,siblingWindow:0,includeContainment:false}},models:{config:{provider:'test'},async embed(xs){return xs.map(()=>[1,1])},async validate({source}){validated.push(source.name);return {verdict:source.id===callee.id?'accept':'reject',validator:'model'}}}});return {result:result.recovery,validated}}
  const filtered=await run();
  assert.deepEqual(filtered.validated,['callee']);
  assert.equal(filtered.result.promotions.length,2);

@@ -2,9 +2,9 @@
 
 ## High-level method
 
-The pipeline consumes source/bundle inventories, graphs with the same function identities, and POG anchors. It finds unmatched bundled functions near accepted anchors and collects source neighbors of the corresponding reference anchors. By default, it checks candidates for an AST match before embedding and ranking (`astBeforeRanking:true`); the first match is accepted immediately and can anchor later targets in the same pass. If none matches, it ranks candidates by embedding cosine similarity and validates up to `topK` (default `3`) in order, stopping at the first acceptance. Model-accepted proposals pass through the configured conflict policy at round end. Source identities remain reusable across bundled targets, including within a chunk.
+The pipeline starts with POG anchors. By default, each unmatched source function gathers bundled candidates from the neighborhoods of accepted pairs. It checks for an AST match before ranking. If no AST match succeeds, it filters candidates by edge role, ranks by embedding similarity, and validates up to three candidates in order. The first accepted pair claims both functions across all chunks and library scopes and can seed further exploration.
 
-The graph inputs can be local or module-aware. The pipeline does not contain bundler-specific search logic. Cross-chunk propagation is optional, while source identities can be reused within and across target chunks. Each unmatched target stops at its first accepted source. It never reads source maps, oracle matches, or experiment result directories. A model acceptance is a heuristic identity judgment, not a proof of semantic equivalence. Initial-anchor errors can still propagate; accepted matches are not automatically rolled back.
+Graph inputs can be local or module-aware. Cross-chunk propagation is configurable. Historical bundle-first runs can opt into source reuse explicitly.
 
 ## Deployment
 

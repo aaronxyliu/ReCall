@@ -1,6 +1,6 @@
 import path from 'node:path';
 import {integer} from './shared/artifacts.mjs';
-export const recoveryDefaults={minFeatures:10,featureMetric:'propertyOperations',minAnchors:3,uniqueBundle:false,topK:3,astBeforeRanking:true,matchEdgeRoles:true,radius:1,maxCodeCharacters:18000,maxRounds:1000,maxValidationCalls:null,minSimilarity:-1,sourceRepresentation:'minified',crossChunk:true,libraryGate:false,conflictPolicy:'discard'};
+export const recoveryDefaults={minFeatures:10,featureMetric:'propertyOperations',minAnchors:3,uniqueBundle:false,topK:3,oneBundlePerSource:true,neighborhoodOrder:'source-first',astBeforeRanking:true,matchEdgeRoles:true,radius:1,maxCodeCharacters:18000,maxRounds:1000,maxValidationCalls:null,minSimilarity:-1,sourceRepresentation:'minified',crossChunk:true,libraryGate:false,conflictPolicy:'discard'};
 export const modelDefaults={endpoint:'http://127.0.0.1:11434',embeddingModel:'qwen3-embedding:0.6b',validationModel:'qwen3.5:27b',thinking:false,temperature:0,seed:42,numCtx:16384,numPredict:384,embeddingBatch:12,timeoutMs:300000,keepAlive:'60m',cacheDir:null,systemPrompt:null,astFirst:false};
 export const defaults={recovery:recoveryDefaults,models:modelDefaults,graph:{useModules:true,siblingWindow:2,includeContainment:true},modules:{followDependencies:true,valueLimit:64,eventLimit:50000000,maxFiles:20000,maxBytes:1073741824},bundler:{hint:null},inputs:{references:null,catalog:null,cacheDir:null,registry:'https://registry.npmjs.org',offline:false,timeoutMs:300000,maxFiles:20000,maxBytes:1073741824},execution:{progress:true}};
 function object(value,label){if(!value||typeof value!=='object'||Array.isArray(value))throw Error(label+' must be an object')}
@@ -15,7 +15,9 @@ export function recoveryOptions(options={}) {
  if(!['propertyOperations','graphNodes'].includes(o.featureMetric))throw Error('Invalid recovery.featureMetric');
  if(!['minified','original'].includes(o.sourceRepresentation))throw Error('Invalid recovery.sourceRepresentation');
  if(!Number.isFinite(o.minSimilarity)||o.minSimilarity< -1||o.minSimilarity>1)throw Error('minSimilarity must be in [-1,1]');
- for(const k of ['uniqueBundle','crossChunk','libraryGate','astBeforeRanking','matchEdgeRoles'])bool(o[k],k);
+ for(const k of ['oneBundlePerSource','uniqueBundle','crossChunk','libraryGate','astBeforeRanking','matchEdgeRoles'])bool(o[k],k);
+ if(!['bundle-first','source-first'].includes(o.neighborhoodOrder))throw Error('Invalid recovery.neighborhoodOrder');
+ if(o.neighborhoodOrder==='source-first'&&!o.astBeforeRanking)throw Error('Source-first recovery requires astBeforeRanking');
  if(!o.matchEdgeRoles)throw Error('Unfiltered recovery has been removed; matchEdgeRoles must be true');
  if(o.radius!==1)throw Error('matchEdgeRoles requires radius 1');return o;
 }

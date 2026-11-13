@@ -31,11 +31,11 @@ ReCall links functions in supplied production bundles to their original library 
 [![ReCall workflow in the original style: anchor set, paired graphs, AST check, top-three ranking and validation](docs/assets/pipeline-workflow-current.png)](docs/assets/pipeline-workflow-current.svg)
 
 1. **Prepare inputs and anchors.** Preserve original function identities and spans, extract POG fingerprints, and resolve source and bundle relationships.
-2. **Explore paired neighborhoods.** For an unmatched bundled function, gather radius-one source candidates around accepted correspondences.
+2. **Explore paired neighborhoods.** For each unmatched source function, gather radius-one bundled candidates around accepted correspondences.
 3. **Try AST matching first.** Scan the candidate pool in order. The first matching normalized AST is accepted immediately and can seed later targets in the same pass.
 4. **Filter after an AST miss.** Retain candidates with at least one accepted parent pair supporting the same edge kind and direction. An empty pool needs no model request.
 5. **Embed and validate.** Rank surviving candidates by cosine similarity and validate up to **three**, stopping at the first acceptance. Model-accepted proposals are promoted after conflict checks at round end.
-6. **Repeat.** Continue propagation until a fixed point or configured budget limit.
+6. **Repeat.** Each accepted pair claims both functions across all chunks and library scopes. Continue propagation until a fixed point or configured budget limit.
 
 AST matching is a heuristic: identical bodies and renamed external bindings can hide different original identities. Relationship filtering can also exclude valid pairs when transformations change graph structure. See [configuration and limitations](docs/configuration.md).
 
@@ -100,6 +100,7 @@ Use the same source bytes, original function spans, package identities and suppl
 | Neighborhood radius | 1 |
 | Bundle cross-chunk relationships | Enabled across supplied files |
 | Source relationships | Isolated per library instance |
+| Match allocation | One-to-one across all chunks and library scopes |
 
 Simulation in **ReCall Exp** retains real embeddings and substitutes GT decisions only for model validation. Ordinary ReCall uses real validation; matching settings do not guarantee simulation scores. AST equality is a heuristic, not proof of unique origin.
 

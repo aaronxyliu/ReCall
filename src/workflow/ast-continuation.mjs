@@ -6,7 +6,7 @@ export function migrateASTBeforeRanking({prior,source,bundle,sourceGraph,bundleG
  if(prior.checkpointDigest){const {checkpointDigest,...state}=prior;if(checkpointDigest!==hash(state))throw Error('Prior checkpoint checksum mismatch')}
  checkInventory(source);checkInventory(bundle);checkGraph(sourceGraph,source);checkGraph(bundleGraph,bundle);
  if(prior.sourceDigest!==source.inputDigest||prior.bundleDigest!==bundle.inputDigest||prior.graphDigests.source!==sourceGraph.graphDigest||prior.graphDigests.bundle!==bundleGraph.graphDigest)throw Error('AST continuation requires unchanged inventories and graphs');
- const before={astBeforeRanking:false,...prior.configuration},after={...configuration};delete before.models;delete after.models;
+ const before={oneBundlePerSource:false,neighborhoodOrder:'bundle-first',astBeforeRanking:false,...prior.configuration},after={oneBundlePerSource:false,neighborhoodOrder:'bundle-first',...configuration};if(before.allowCorroboratedAstCopies===false)delete before.allowCorroboratedAstCopies;delete before.models;delete after.models;
  if(before.astBeforeRanking||after.astBeforeRanking!==true)throw Error('AST continuation requires false-to-true policy change');
  before.astBeforeRanking=true;if(hash(Object.entries(before).sort())!==hash(Object.entries(after).sort()))throw Error('AST continuation changes unrelated recovery settings');
  const withoutCache=m=>Object.fromEntries(Object.entries(m||{}).filter(([k])=>k!=='cacheDir'));

@@ -9,7 +9,7 @@ function inputs(){return {
  source:extractFeatures({files:[{path:'source.js',library:{name:'lib',version:'1.0.0'},code:`function anchor(o){${body}} function helper(v){return v+1}`}]}),
  bundle:extractFeatures({files:[{path:'bundle.js',code:`function a(o){${body}} function b(o){${body}} function h(v){return v+1} function k(v){return v+1}`}]}),
 };}
-const config={recovery:{minAnchors:1},graph:{useModules:false,siblingWindow:10,includeContainment:false}};
+const config={recovery:{neighborhoodOrder:'bundle-first',oneBundlePerSource:false,minAnchors:1},graph:{useModules:false,siblingWindow:10,includeContainment:false}};
 const models=()=>({config:{provider:'test'},async embed(xs){return xs.map(()=>[1,1])},async validate(){return {verdict:'accept',validator:'model'}}});
 const identities=r=>r.promotions.map(p=>[p.bundleId,p.sourceId].join('|')).sort();
 
@@ -41,7 +41,7 @@ for(const astBeforeRanking of [false,true])test(`same-chunk sources remain reusa
  assert.equal(r.recovery.stats.conflicts,0);
  assert.equal(r.recovery.queries.length,2);
  assert.equal(new Set(r.recovery.promotions.map(p=>p.bundleId)).size,4);
- const limited=await runPipeline({...i,config:{...cfg,recovery:{...cfg.recovery,maxValidationCalls:1}},models:models()});
+ const limited=await runPipeline({...i,config:{...cfg,recovery:{neighborhoodOrder:'bundle-first',oneBundlePerSource:false,...cfg.recovery,maxValidationCalls:1}},models:models()});
  assert.equal(limited.recovery.status,'budget-exhausted');
  const resumed=await recoverFunctions({...i,...limited,config:cfg.recovery,models:models(),resume:limited.recovery});
  assert.deepEqual(identities(resumed),identities(r.recovery));

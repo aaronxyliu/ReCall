@@ -7,7 +7,7 @@ Precedence is built-in defaults → configuration file → explicit CLI override
 | Section | Main settings and defaults |
 |---|---|
 | `inputs` | `references:null`, `catalog:null`, `cacheDir:null`, `registry:"https://registry.npmjs.org"`, `offline:false`, `timeoutMs:300000`, `maxFiles:20000`, `maxBytes:1073741824` |
-| `recovery` | `minFeatures:10`, `featureMetric:"propertyOperations"`, `minAnchors:3`, `uniqueBundle:false`, `libraryGate:false`, `topK:3`, `astBeforeRanking:true`, `matchEdgeRoles:true`, `radius:1`, `crossChunk:true`, `minSimilarity:-1`, `sourceRepresentation:"minified"`, `maxCodeCharacters:18000`, `maxRounds:1000`, `maxValidationCalls:null` |
+| `recovery` | `minFeatures:10`, `featureMetric:"propertyOperations"`, `minAnchors:3`, `uniqueBundle:false`, `libraryGate:false`, `topK:3`, `neighborhoodOrder:"source-first"`, `oneBundlePerSource:true`, `astBeforeRanking:true`, `matchEdgeRoles:true`, `radius:1`, `crossChunk:true`, `minSimilarity:-1`, `sourceRepresentation:"minified"`, `maxCodeCharacters:18000`, `maxRounds:1000`, `maxValidationCalls:null` |
 | `models` | `endpoint:"http://127.0.0.1:11434"`, `embeddingModel:"qwen3-embedding:0.6b"`, `validationModel:"qwen3.5:27b"`, `thinking:false`, `temperature:0`, `seed:42`, `numCtx:16384`, `numPredict:384`, `embeddingBatch:12`, `timeoutMs:300000`, `keepAlive:"60m"`, `cacheDir:null`, `systemPrompt:null` |
 | `graph` | `useModules:true`, `siblingWindow:2`, `includeContainment:true` |
 | `modules` | `followDependencies:true`, `valueLimit:64`, `eventLimit:50000000`, `maxFiles:20000`, `maxBytes:1073741824` |
@@ -57,14 +57,17 @@ with module/instance scopes separated. Template-generated component behavior is
 not modeled and remains diagnosed. These adapters affect graph analysis only,
 not the function text passed to embedding or validation models.
 
-`recovery.astBeforeRanking` (default `true`) checks every eligible neighborhood
-candidate with the existing AST policy before the embedding top-k cutoff. The first
-AST match in source-inventory order is promoted immediately and can support later
-targets in the same pass; no embedding or semantic validation is performed for
-that target, including when other AST-compatible alternatives might exist. When no AST candidate matches, the
-embedding ranking selects up to `recovery.topK` candidates (default `3`) for validation in rank order, stopping at the first acceptance. Queries record the AST selection
-stage separately; pre-ranking AST decisions are not embedding top-k observations.
-Accepted targets remain settled under the configured allocation policy.
+Recovery defaults to `neighborhoodOrder: "source-first"` and
+`oneBundlePerSource: true`. Each unmatched source gathers unresolved bundled
+neighbors through accepted pairs and checks them for an AST match. If AST
+finds no match, the edge-role filter and embedding ranking select up to
+`topK` bundled candidates for validation. The first accepted anchor, AST
+match, or model match claims both functions across all chunks and library scopes. Accepted pairs
+can seed further exploration.
+
+For historical comparisons, set `neighborhoodOrder: "bundle-first"` and
+`oneBundlePerSource: false` explicitly. Start a fresh run when changing
+the search direction or source match limit.
 
 Candidate-policy upgrades require an explicit continuation receipt. They retain
 frozen inventories, graph digests, prior accepted mappings, and exact model-response

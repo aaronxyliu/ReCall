@@ -5,7 +5,7 @@ import {runPipeline,recoverFunctions} from '../components/pipeline/index.mjs';
 const anchor='function anchor(o){o.a;o.b;o.c;o.d;o.e;o.f;o.g;o.h;o.i;o.j;}';
 function inputs(){return {source:extractFeatures({files:[{id:'s',path:'source.js',code:anchor+'function x(v){return v+1}function y(v){return v+2}',library:{name:'lib',version:'1'}}]}),bundle:extractFeatures({files:[{id:'b',path:'bundle.js',code:anchor+'function a(v){return v+1}function b(v){return v+2}'}]})};}
 const models=()=>({config:{provider:'test'},async embed(xs){return xs.map(()=>[1,1])},async validate(){return {verdict:'accept',validator:'ast'}}});
-const config={recovery:{astBeforeRanking:false,libraryGate:false,conflictPolicy:'retain'},graph:{useModules:false,siblingWindow:2,includeContainment:true}};
+const config={recovery:{neighborhoodOrder:'bundle-first',oneBundlePerSource:false,astBeforeRanking:false,libraryGate:false,conflictPolicy:'retain'},graph:{useModules:false,siblingWindow:2,includeContainment:true}};
 test('stops at first acceptance, skips matched targets, retains cross-target conflicts',async()=>{
  const i=inputs(),r=await runPipeline({...i,config,models:models()});
  assert.equal(r.recovery.status,'fixed-point');

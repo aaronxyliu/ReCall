@@ -17,7 +17,7 @@ import {inventoryDigest} from '../src/shared/artifacts.mjs';
 
 const root=fileURLToPath(new URL('..',import.meta.url)),example=path.join(root,'examples/minimal');
 const inputs=()=>({source:extractFeatures(path.join(example,'source.json')),bundle:extractFeatures(path.join(example,'bundle.json'))});
-const config={recovery:{astBeforeRanking:false,minAnchors:1},graph:{siblingWindow:0,includeContainment:false}};
+const config={recovery:{neighborhoodOrder:'bundle-first',oneBundlePerSource:false,astBeforeRanking:false,minAnchors:1},graph:{siblingWindow:0,includeContainment:false}};
 const mock=()=>({config:{provider:'deterministic-test'},async embed(xs){return xs.map(()=>[1,1])},async validate({source,bundle}){return {verdict:/function h\(/.test(bundle.code)&&/function helper\(/.test(source.code)?'accept':'reject'}}});
 
 test('POG inventory preserves own-body counting and establishes one exact anchor',()=>{
@@ -70,11 +70,11 @@ test('complete pipeline recovers imported helper with model decisions and no ora
  assert(!local.recovery.promotions.some(p=>p.sourceId===helper.id));
 });
 test('library gating and validation budgets are explicit terminal states',async()=>{
- const {source,bundle}=inputs();const gated=await runPipeline({source,bundle,config:{...config,recovery:{astBeforeRanking:false,libraryGate:true,minAnchors:2}},models:mock()});
+ const {source,bundle}=inputs();const gated=await runPipeline({source,bundle,config:{...config,recovery:{neighborhoodOrder:'bundle-first',oneBundlePerSource:false,astBeforeRanking:false,libraryGate:true,minAnchors:2}},models:mock()});
  assert.equal(gated.recovery.promotions.length,0);assert.equal(gated.recovery.stats.validationCalls,0);
- const ungated=await runPipeline({source,bundle,config:{...config,recovery:{astBeforeRanking:false,minAnchors:2}},models:mock()});
+ const ungated=await runPipeline({source,bundle,config:{...config,recovery:{neighborhoodOrder:'bundle-first',oneBundlePerSource:false,astBeforeRanking:false,minAnchors:2}},models:mock()});
  assert(ungated.recovery.promotions.length>0,'default recovery must admit supplied libraries below the identification threshold');
- const r=await runPipeline({source,bundle,config:{...config,recovery:{astBeforeRanking:false,minAnchors:1,maxValidationCalls:1}},models:mock()});
+ const r=await runPipeline({source,bundle,config:{...config,recovery:{neighborhoodOrder:'bundle-first',oneBundlePerSource:false,astBeforeRanking:false,minAnchors:1,maxValidationCalls:1}},models:mock()});
  assert.equal(r.recovery.status,'budget-exhausted');assert.equal(r.recovery.stats.validationCalls,1);
 });
 test('invalid validator output does not become a recovered identity',async()=>{
@@ -173,7 +173,7 @@ test('cross-chunk propagation is enabled by default and can be explicitly disabl
  const helper=source.functions.find(f=>f.name==='helper');
  const local=await runPipeline({source,bundle,config:{...config,recovery:{...config.recovery,crossChunk:false}},models:mock()});
  assert(!local.recovery.promotions.some(p=>p.sourceId===helper.id));
- const enabled=await runPipeline({source,bundle,config:{...config,recovery:{astBeforeRanking:false,minAnchors:1}},models:mock()});
+ const enabled=await runPipeline({source,bundle,config:{...config,recovery:{neighborhoodOrder:'bundle-first',oneBundlePerSource:false,astBeforeRanking:false,minAnchors:1}},models:mock()});
  assert(enabled.recovery.promotions.some(p=>p.sourceId===helper.id&&p.kind==='model-recovered'));
  const repeats=extractFeatures({files:[...bundle.units,...bundle.units.map(u=>({...u,id:u.id+'-copy',environment:'copy'}))]});
  assert.equal(identifyAnchors(source,repeats).matches.length,2);
